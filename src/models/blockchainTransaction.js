@@ -5,33 +5,33 @@ var model = null;
 
 module.exports = function(){
   var schema = mongooseSchema({
+    category: {
+      type: String,
+      required: true
+    },
     amount: {
       type: Number,
       required: true,
     },
-    blockIndex: {
+    label: {
+      type: String,
+      required: false
+    },
+    blockhash: {
+      type: String,
+      required: true
+    },
+    blocktime: {
       type: Number,
       required: true
     },
-    extra: {
+    txid: {
       type: String,
-      required: false
+      required: true
     },
     fee: {
       type: Number,
-      required: true
-    },
-    isBase: {
-      type: Number,
-      required: true,
-    },
-    paymentId: {
-      type: String,
       required: false
-    },
-    state: {
-      type: Number,
-      required: false,
     },
     isConfirmed: {
       type: Boolean,
@@ -41,26 +41,11 @@ module.exports = function(){
       type: Number,
       required: true
     },
-    transactionHash: {
-      type: String,
+    time: {
+      type: Number,
       required: true
     },
-    transfers: [{
-        amount: {
-            type: Number,
-            required: true
-          },
-        address: {
-          type: String,
-          required: false
-        },
-        type: {
-          type: Number,
-          required: false
-        }
-      }
-    ],
-    unlockTime: {
+    timereceived: {
       type: Number,
       required: true
     },
@@ -71,6 +56,10 @@ module.exports = function(){
     updatedAt: {
       type: Date,
       required: false,
+    },
+    to: {
+      type: String,
+      required: false
     }
   });
 

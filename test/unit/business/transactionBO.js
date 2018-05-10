@@ -67,63 +67,74 @@ describe('Business > TransactionBO > ', function() {
         .withArgs({
           ownerId: 'ownerId',
           transactionOwnerId: 'transactionOwnerId',
-          anonymity: 6,
-          fee: 1000000,
-          paymentId: 'PAYMENT_ID',
-          addresses: ['ADDRESS1', 'ADDRESS2'],
-          transfers: [{
-            amount: 100000000,
-            address: 'ADDRESS3'
-          }, {
-            amount: 100000000,
-            address: 'ADDRESS4'
-          }],
-          changeAddress: 'ADDRESS1',
+          from: 'addressFrom',
+          to: 'addressTo',
+          amount: 1,
           status: 0,
+          comment: 'comment',
+          commentTo: 'addressFrom@addressTo',
           createdAt: now
         })
         .returns(Promise.resolve({
           _id: 'ID',
           ownerId: 'ownerId',
           transactionOwnerId: 'transactionOwnerId',
-          anonymity: 6,
-          fee: 1000000,
-          paymentId: 'PAYMENT_ID',
-          addresses: ['ADDRESS1', 'ADDRESS2'],
-          transfers: [{
-            amount: 100000000,
-            address: 'ADDRESS3'
-          }, {
-            amount: 100000000,
-            address: 'ADDRESS4'
-          }],
-          changeAddress: 'ADDRESS1',
+          from: 'addressFrom',
+          to: 'addressTo',
+          amount: 1,
           status: 0,
+          comment: 'comment',
+          commentTo: 'addressFrom@addressTo',
           createdAt: now
         }));
 
       var sendTransactionStub = sinon.stub(daemonHelper, 'sendTransaction');
       sendTransactionStub
         .withArgs(
-          6, //entity.anonymity,
-          1000000, //entity.fee,
-          0,
-          'PAYMENT_ID', //entity.paymentId,
-          ['ADDRESS1', 'ADDRESS2'], //entity.addresses,
-          [{
-            amount: 100000000,
-            address: 'ADDRESS3'
-          }, {
-            amount: 100000000,
-            address: 'ADDRESS4'
-          }], //entity.transfers,
-          'ADDRESS1' //entity.changeAddress
+          'addressTo',
+          1,
+          'comment',
+          'addressFrom@addressTo'
         )
+        .returns(Promise.resolve('txid'));
+
+      var getTransactionStub = sinon.stub(daemonHelper, 'getTransaction');
+      getTransactionStub
+        .withArgs('txid')
         .returns(Promise.resolve({
-          result: {
-            transactionHash: 'transactionHash'
-          }
+            amount: 0,
+            fee: -0.000197,
+            confirmations: 7220,
+            blockhash:'02ae1f8c2ebe394be130ba0df2dfcdb463fa10766de2c6f6505f4470d1b08c52',
+            blockindex:1,
+            blocktime: 1525771681,
+            txid:'txid',
+            walletconflicts:[],
+            time: 1525771674,
+            timereceived: 1525771674,
+            'bip125-replaceable':'no',
+            comment:'comment',
+            to: 'addressFrom@addressTo',
+            details:[{
+              account: '',
+              address: 'addressFrom',
+              category: 'send',
+              amount: -1,
+              label: '',
+              vout: 0,
+              fee: -0.000197,
+              abandoned: false
+            },{
+              account: '',
+              address: 'addressTo',
+              category: 'receive',
+              amount: 1,
+              label: '',
+              vout: 0
+            }
+          ]
         }));
+
 
       var transactionRequestUpdateStub = sinon.stub(transactionRequestDAO, 'update');
       transactionRequestUpdateStub
@@ -131,136 +142,84 @@ describe('Business > TransactionBO > ', function() {
           _id: 'ID',
           ownerId: 'ownerId',
           transactionOwnerId: 'transactionOwnerId',
-          anonymity: 6,
-          fee: 1000000,
-          paymentId: 'PAYMENT_ID',
-          addresses: ['ADDRESS1', 'ADDRESS2'],
-          transfers: [{
-            amount: 100000000,
-            address: 'ADDRESS3'
-          }, {
-            amount: 100000000,
-            address: 'ADDRESS4'
-          }],
-          changeAddress: 'ADDRESS1',
-          status: 0,
+          to: 'addressTo',
+          from: 'addressFrom',
+          amount: 1,
+          status: 1,
+          comment: 'comment',
+          commentTo: 'addressFrom@addressTo',
           createdAt: now,
-          transactionHash: 'transactionHash',
-          updatedAt: now
+          updatedAt: now,
+          transactionHash: 'txid',
+          fee: 0.000197
         })
         .returns(Promise.resolve({
           _id: 'ID',
           ownerId: 'ownerId',
           transactionOwnerId: 'transactionOwnerId',
-          anonymity: 6,
-          fee: 1000000,
-          paymentId: 'PAYMENT_ID',
-          addresses: ['ADDRESS1', 'ADDRESS2'],
-          transfers: [{
-            amount: 100000000,
-            address: 'ADDRESS3'
-          }, {
-            amount: 100000000,
-            address: 'ADDRESS4'
-          }],
-          changeAddress: 'ADDRESS1',
-          status: 0,
+          to: 'addressTo',
+          from: 'addressFrom',
+          amount: 1,
+          status: 1,
+          comment: 'comment',
+          commentTo: 'addressFrom@addressTo',
           createdAt: now,
-          transactionHash: 'transactionHash',
-          updatedAt: now
+          updatedAt: now,
+          transactionHash: 'txid',
+          fee: 0.000197
         }));
 
-      var getTransactionStub = sinon.stub(daemonHelper, 'getTransaction');
-      getTransactionStub
-        .withArgs('transactionHash')
-        .returns(Promise.resolve({
-          result: {
-            transaction: {
-              blockIndex: 1,
-              timestamp: 2,
-              amount: 3
-            }
-          }
-        }));
-
-      var getAllStub = sinon.stub(addressBO, 'getAll');
-      getAllStub
-        .withArgs({address: 'ADDRESS1'})
-        .returns(Promise.resolve([{
-          address:'ADDRESS1'
-        }]));
-      getAllStub
-        .withArgs({address: 'ADDRESS2'})
-        .returns(Promise.resolve([]));
-
-      var registerAddressFromDaemonStub = sinon.stub(addressBO, 'registerAddressFromDaemon');
-      registerAddressFromDaemonStub
-        .withArgs('ownerId', 'ADDRESS2')
-        .returns(Promise.resolve({
-          address:'ADDRESS2'
-        }));
-
-      var updateBalanceStub = sinon.stub(addressBO, 'updateBalance');
-      updateBalanceStub
-        .withArgs('ADDRESS1')
+      var withdrawStub = sinon.stub(addressBO, 'withdraw');
+      withdrawStub
+        .withArgs('addressFrom', 1.000197, 1)
         .returns(Promise.resolve());
-      updateBalanceStub
-        .withArgs('ADDRESS2')
+
+      var getByAddressStub = sinon.stub(addressBO, 'getByAddress');
+      getByAddressStub
+        .withArgs(null, 'addressTo')
+        .returns(Promise.resolve({
+          address: 'addressTo'
+        }));
+
+
+      var depositStub = sinon.stub(addressBO, 'deposit');
+      depositStub
+        .withArgs('addressFrom', 1.000197, 1)
         .returns(Promise.resolve());
 
       return transactionBO.save({
         ownerId: 'ownerId',
-        anonymity: 6,
         transactionOwnerId: 'transactionOwnerId',
-        fee: 1000000,
-        paymentId: 'PAYMENT_ID',
-        addresses: ['ADDRESS1', 'ADDRESS2'],
-        transfers: [{
-          amount: 100000000,
-          address: 'ADDRESS3'
-        }, {
-          amount: 100000000,
-          address: 'ADDRESS4'
-        }],
-        changeAddress: 'ADDRESS1'
+        from: 'addressFrom',
+        to: 'addressTo',
+        amount: 1,
+        comment: 'comment'
       })
         .then(function(r){
           expect(r).to.be.deep.equal({
             id: 'ID',
             ownerId: 'ownerId',
             transactionOwnerId: 'transactionOwnerId',
-            anonymity: 6,
-            fee: 1000000,
-            paymentId: 'PAYMENT_ID',
-            addresses: ['ADDRESS1', 'ADDRESS2'],
-            transfers: [{
-              amount: 100000000,
-              address: 'ADDRESS3'
-            }, {
-              amount: 100000000,
-              address: 'ADDRESS4'
-            }],
-            changeAddress: 'ADDRESS1',
+            to: 'addressTo',
+            from: 'addressFrom',
+            amount: 1,
             status: 1,
+            comment: 'comment',
+            commentTo: 'addressFrom@addressTo',
             createdAt: now,
-            transactionHash: 'transactionHash',
-            updatedAt: now
+            updatedAt: now,
+            transactionHash: 'txid',
+            fee: 0.000197
           });
-          expect(transactionRequestSaveStub.callCount).to.be.equal(1);
-          expect(transactionRequestUpdateStub.callCount).to.be.equal(1);
-          expect(sendTransactionStub.callCount).to.be.equal(1);
-          expect(getTransactionStub.callCount).to.be.equal(1);
-          expect(getAllStub.callCount).to.be.equal(2);
-          expect(registerAddressFromDaemonStub.callCount).to.be.equal(1);
-          expect(updateBalanceStub.callCount).to.be.equal(2);
 
           transactionRequestSaveStub.restore();
           transactionRequestUpdateStub.restore();
           sendTransactionStub.restore();
           getTransactionStub.restore();
-          getAllStub.restore();
-          registerAddressFromDaemonStub.restore();
-          updateBalanceStub.restore();
+          withdrawStub.restore();
+          getTransactionStub.restore();
+          getByAddressStub.restore();
+          depositStub.restore();
         });
     });
 

@@ -43,7 +43,7 @@ module.exports = function(dependencies) {
             return daemonHelper.getAddresses();
           })
           .then(function(r) {
-            addresses = r.result.addresses;
+            addresses = r;
             var p = [];
 
             logger.debug('[AAPMSWorker] Daemon available addresses', JSON.stringify(addresses));

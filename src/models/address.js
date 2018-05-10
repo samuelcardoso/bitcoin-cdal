@@ -13,16 +13,6 @@ module.exports = function(){
       type: String,
       required: true,
     },
-    keys: {
-      spendSecretKey: {
-        type: String,
-        required: false
-      },
-      spendPublicKey: {
-        type: String,
-        required: false
-      }
-    },
     balance: {
       available: {
         type: Number,

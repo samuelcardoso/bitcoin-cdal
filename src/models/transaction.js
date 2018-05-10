@@ -51,10 +51,6 @@ module.exports = function(){
       type: String,
       required: true
     },
-    paymentId: {
-      type: String,
-      required: false
-    },
     address: {
       type: String,
       required: true

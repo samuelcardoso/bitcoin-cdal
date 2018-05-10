@@ -13,48 +13,20 @@ module.exports = function(){
       type: String,
       required: false,
     },
-    extra: {
-      type: String,
-      required: false
-    },
-    status: {
-      type: Number,
-      required: true
-    },
-    anonymity: {
-      type: Number,
-      required: true
-    },
-    fee: {
-      type: Number,
-      required: false
-    },
     transactionHash: {
       type: String,
       required: false
     },
-    paymentId: {
+    from: {
       type: String,
-      required: false
+      required: true
     },
-    addresses: [{
-        type: String,
-        required: true
-      }
-    ],
-    transfers: [{
-        amount: {
-            type: Number,
-            required: true
-          },
-        address: {
-          type: String,
-          required: false
-        }
-      }
-    ],
-    changeAddress: {
+    to: {
       type: String,
+      required: true
+    },
+    fee: {
+      type: Number,
       required: false
     },
     createdAt: {

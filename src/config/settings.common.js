@@ -19,5 +19,8 @@ module.exports = {
       currentBlockIndex: 0,
       defaultTransactionsBlockCount: 5000,
       minimumFee: 1000
-    }
+    },
+
+    mutex: {
+    },
   };

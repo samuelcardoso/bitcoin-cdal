@@ -1,69 +1,44 @@
-var logger        = require('../config/logger');
-
 module.exports = function(dependencies) {
-  var requestHelper = dependencies.requestHelper;
-  var configurationBO = dependencies.configurationBO;
+  var client = dependencies.client;
 
   return {
-    _main: function(method, params) {
-      var self = this;
+    getAddresses: function() {
       return new Promise(function(resolve, reject) {
         var chain = Promise.resolve();
-        var daemonEndpoint = null;
 
-        var body = {
-          params: params,
-          method: method,
-          id: 'ID',
-          jsonrpc: '2.0'
-        };
-
-        chain
+        return chain
           .then(function() {
-            return configurationBO.getByKey('daemonEndpoint');
+            return client.listAddressGroupings();
           })
           .then(function(r) {
-            daemonEndpoint = r.value;
+            var mapAddresses = function(r, addresses) {
+              if (!addresses) {
+                addresses = [];
+              }
 
-            logger.info('[DaemonHelper] Executing the method ' + method + ' at ' + daemonEndpoint, JSON.stringify(body));
-            return requestHelper.postJSON(daemonEndpoint, [], body, []);
-          })
-          .then(function(r) {
-            logger.info('[DaemonHelper] Parsing the daemon return', JSON.stringify(r));
+              r.forEach(function(item) {
+                if (Array.isArray(item[0])) {
+                  mapAddresses(item, addresses);
+                } else {
+                  addresses.push(item[0]);
+                }
+              });
 
-            if (!r.error) {
-              return r;
-            } else {
-              self._throwDaemonError(r);
-            }
+              return addresses;
+            };
+            return mapAddresses(r);
           })
           .then(resolve)
           .catch(reject);
       });
     },
 
-    getAddresses: function() {
-      return this._main('getAddresses');
-    },
-
-    getUnconfirmedTransactionHashes: function(addresses) {
-      return this._main('getUnconfirmedTransactionHashes', {addresses: addresses || []});
-    },
-
-    getSpendKeys: function(address) {
-      return this._main('getSpendKeys', {address: address});
-    },
-
-    getViewKey: function() {
-      return this._main('getViewKey');
-    },
-
     createAddress: function() {
-      return this._main('createAddress');
+      return client.getNewAddress();
     },
 
-    getBalance: function(address) {
-      return this._main('getBalance', {address: address});
+    getBalance: function() {
+      return cliente.getBalance();
     },
 
     getTransactions: function(firstBlockIndex, blockCount, addresses, paymentId) {
@@ -75,28 +50,12 @@ module.exports = function(dependencies) {
       });
     },
 
-    getTransaction: function(transactionHash) {
-      return this._main('getTransaction', {transactionHash: transactionHash});
+    getTransaction: function(txid) {
+      return client.getTransaction(txid);
     },
 
-    getStatus: function() {
-      return this._main('getStatus');
-    },
-
-    sendTransaction: function(anonymity, fee, unlockTime, paymentId, addresses, transfers, changeAddress) {
-      return this._main('sendTransaction', {
-        anonymity: anonymity,
-        fee: fee,
-        unlockTime: unlockTime,
-        paymentId: paymentId,
-        addresses: addresses,
-        transfers: transfers,
-        changeAddress: changeAddress
-      });
-    },
-
-    deleteAddress: function(address) {
-      return this._main('deleteAddress', {address: address});
+    sendTransaction: function(address, amount, comment, toComment) {
+      return cliente.sendToAddress(address, amount, comment, toComment);
     },
 
     _throwDaemonError: function(r) {

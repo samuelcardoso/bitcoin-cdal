@@ -1,4 +1,3 @@
-var Promise         = require('promise');
 var logger          = require('../config/logger');
 
 module.exports = function(dependencies) {
@@ -6,6 +5,7 @@ module.exports = function(dependencies) {
   var modelParser = dependencies.modelParser;
   var daemonHelper = dependencies.daemonHelper;
   var dateHelper = dependencies.dateHelper;
+  var mutexHelper = dependencies.mutexHelper;
 
   return {
     dependencies: dependencies,
@@ -68,7 +68,7 @@ module.exports = function(dependencies) {
           })
           .then(function(r) {
             logger.info('[AddressBO] Saving the address and linking to ownerId', ownerId);
-            return self.registerAddressFromDaemon(ownerId, r.result.address);
+            return self.registerAddressFromDaemon(ownerId, r);
           })
           .then(resolve)
           .catch(reject);
@@ -77,32 +77,21 @@ module.exports = function(dependencies) {
 
     registerAddressFromDaemon: function(ownerId, address) {
       var chain = Promise.resolve();
-      var addressEntity = null;
 
       return new Promise(function(resolve, reject) {
         chain
           .then(function() {
-            addressEntity = {
+            var addressEntity = {
               ownerId: ownerId,
-              address: address
+              address: address,
+              createdAt: dateHelper.getNow(),
+              isEnabled: true,
+              balance: {
+                available: 0,
+                locked: 0
+              }
             };
 
-            logger.info('[AddressBO] Getting keys from the address ', address);
-            return daemonHelper.getSpendKeys(address);
-          })
-          .then(function(r) {
-            logger.info('[AddressBO] Returned keys from address ', address, JSON.stringify(r));
-            addressEntity.keys = {
-              spendPublicKey: r.result.spendPublicKey,
-              spendSecretKey: r.result.spendSecretKey
-            };
-
-            addressEntity.createdAt = dateHelper.getNow();
-            addressEntity.isEnabled = true;
-            addressEntity.balance = {
-              available: 0,
-              locked: 0
-            };
             logger.info('[AddressBO] Saving the address to the database', JSON.stringify(addressEntity));
             return addressDAO.save(addressEntity);
           })
@@ -277,18 +266,95 @@ module.exports = function(dependencies) {
               return addressDAO.disable(addresses.id);
             }
           })
-          .then(function(address) {
-            logger.info('[AddressBO] Address disabled successfully', JSON.stringify(address));
-            logger.info('[AddressBO] Trying to delete the address from the daemon');
-            return daemonHelper.deleteAddress(address.address);
+          .then(resolve)
+          .catch(reject);
+      });
+    },
+
+    withdraw: function(address, amount, balanceType) {
+      var self = this;
+
+      return new Promise(function(resolve, reject) {
+        var chain = mutexHelper.lock(address);
+        var unlock = null;
+
+        return chain
+          .then(function(r) {
+            unlock = r;
+            return self.getByAddress(null, address);
           })
-          .then(function() {
-            logger.info('[AddressBO] The address was deleted from daemon successfully', address);
-            return true;
+          .then(function(r) {
+            logger.info('[WalletBO.withdraw()] Checking if the wallet has funds', JSON.stringify(r));
+            var referenceBalance = balanceType === 1 ?
+                                                   r.balance.locked :
+                                                   r.balance.available;
+            if (referenceBalance < amount) {
+              throw {
+                status: 409,
+                error: 'INVALID_WALLET_BALANCE',
+                message: 'Source wallet does not have funds to withdraw (+' + referenceBalance + ', -' + amount + ')'
+              };
+            } else {
+              if (balanceType === 1) {
+                logger.info('[WalletBO.withdraw()] Withdrawing funds in the locked balance (address, amount)', address, -amount);
+                r.balance.locked -= amount;
+              } else {
+                logger.info('[WalletBO.withdraw()] Withdrawing funds in the available balance (address, amount)', address, -amount);
+                r.balance.available -= amount;
+              }
+
+              newAddress = modelParser.prepare(r);
+              newAddress.isEnabled = true;
+              newAddress.updatedAt = dateHelper.getNow();
+
+              logger.debug('[AddressBO] New address balance', JSON.stringify(newAddress));
+              return addressDAO.update(r);
+            }
+          })
+          .then(function(r) {
+            unlock();
+            return modelParser.clear(r);
           })
           .then(resolve)
           .catch(reject);
       });
     },
+
+    deposit: function(address, amount, balanceType) {
+      var self = this;
+
+      return new Promise(function(resolve, reject) {
+        var chain = mutexHelper.lock(address);
+        var unlock = null;
+
+        return chain
+          .then(function(r) {
+            unlock = r;
+            return self.getByAddress(null, address);
+          })
+          .then(function(r) {
+            if (balanceType === 1) {
+              logger.info('[AddressBO] Depositing funds in the locked balance (address, amount)', address, amount);
+              r.balance.locked += amount;
+            } else {
+              logger.info('[AddressBO] Depositing funds in the available balance (address, amount)', address, amount);
+              r.balance.available += amount;
+            }
+
+            newAddress = modelParser.prepare(r);
+            newAddress.isEnabled = true;
+            newAddress.updatedAt = dateHelper.getNow();
+
+            logger.debug('[AddressBO] New address balance', JSON.stringify(newAddress));
+            return addressDAO.update(r);
+          })
+          .then(function(r) {
+            unlock();
+            return modelParser.clear(r);
+          })
+          .then(resolve)
+          .catch(reject);
+      });
+    }
   };
 };
