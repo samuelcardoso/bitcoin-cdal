@@ -43,10 +43,6 @@ module.exports = function(){
         },
       }
     },
-    blockIndex: {
-      type: Number,
-      required: true
-    },
     transactionHash: {
       type: String,
       required: true

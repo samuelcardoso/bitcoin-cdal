@@ -9,6 +9,10 @@ module.exports = function(){
       type: String,
       required: true
     },
+    address: {
+      type: String,
+      required: true
+    },
     amount: {
       type: Number,
       required: true,
@@ -36,10 +40,6 @@ module.exports = function(){
     isConfirmed: {
       type: Boolean,
       required: false
-    },
-    timestamp: {
-      type: Number,
-      required: true
     },
     time: {
       type: Number,
