@@ -100,11 +100,11 @@ module.exports = function() {
       });
     },
 
-    updateIsConfirmedFlag: function(confirmedBlockIndex) {
+    updateIsConfirmedFlag: function(transactionHash) {
       return new Promise(function(resolve, reject) {
-        logger.log('info', '[TransactionDAO] Updating isConfirmedFlag from transactions ', confirmedBlockIndex);
+        logger.log('info', '[TransactionDAO] Updating isConfirmedFlag from transactions ', transactionHash);
 
-        model.updateMany({blockIndex: {$lte: confirmedBlockIndex}},
+        model.updateMany({transactionHash: transactionHash},
           $.flatten({
             isConfirmed: true,
             updatedAt: new Date()
@@ -122,14 +122,14 @@ module.exports = function() {
       });
     },
 
-    updateTransactionInfo: function(transactionHash, blockIndex, timestamp) {
+    updateTransactionInfo: function(transactionHash, blockhash, blocktime) {
       return new Promise(function(resolve, reject) {
-        logger.info('[TransactionDAO] Updating transaction informations from transactions ', transactionHash, blockIndex, timestamp);
+        logger.info('[TransactionDAO] Updating transaction informations from transactions ', transactionHash, blockhash, blocktime);
 
         model.updateMany({transactionHash: transactionHash},
           $.flatten({
-            blockIndex: blockIndex,
-            timestamp: timestamp,
+            blockhash: blockhash,
+            blocktime: blocktime,
             updatedAt: new Date()
           }, {multi: true}))
         .then(function() {

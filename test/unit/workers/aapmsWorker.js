@@ -29,9 +29,7 @@ describe('Workers > AAPMSWorker > ', function() {
     var getAddresses = sinon.stub(daemonHelper, 'getAddresses');
     getAddresses
       .withArgs()
-      .returns(Promise.resolve({result:{
-        addresses: ['ADDRESS1', 'ADDRESS2']
-      }}));
+      .returns(Promise.resolve(['ADDRESS1', 'ADDRESS2']));
 
     getByAddressStub = sinon.stub(addressBO, 'getByAddress');
     getByAddressStub

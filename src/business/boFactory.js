@@ -45,7 +45,8 @@ function factory(dao) {
             request: require('request')
           }),
           configurationBO: factory('configuration')
-        })
+        }),
+        configurationBO: factory('configuration')
       });
     default:
       return null;
