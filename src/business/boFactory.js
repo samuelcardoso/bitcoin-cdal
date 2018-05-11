@@ -3,10 +3,6 @@ var AddressBO                   = require('./addressBO');
 var ConfigurationBO             = require('./configurationBO');
 var DAOFactory                  = require('../daos/daoFactory');
 var ModelParser                 = require('../models/modelParser');
-var DateHelper                  = require('../helpers/dateHelper');
-var MutexHelper                 = require('../helpers/dateHelper');
-var mutex                       = require( 'node-mutex' );
-var settings                    = require('../config/settings');
 var HelperFactory               = require('../helpers/helperFactory');
 
 function factory(dao) {
@@ -15,27 +11,29 @@ function factory(dao) {
       return new ConfigurationBO({
         configurationDAO: DAOFactory.getDAO('configuration'),
         modelParser: new ModelParser(),
-        dateHelper: new DateHelper()
+        dateHelper: HelperFactory.getHelper('date')
       });
     case 'transaction':
       return new TransactionBO({
         addressBO: factory('address'),
+        configurationBO: factory('configuration'),
         addressDAO: DAOFactory.getDAO('address'),
         transactionDAO: DAOFactory.getDAO('transaction'),
         transactionRequestDAO: DAOFactory.getDAO('transactionRequest'),
         blockchainTransactionDAO: DAOFactory.getDAO('blockchainTransaction'),
         modelParser: new ModelParser(),
         daemonHelper: HelperFactory.getHelper('daemon'),
-        dateHelper: new DateHelper()
+        dateHelper: HelperFactory.getHelper('date'),
+        mutexHelper: HelperFactory.getHelper('mutex')
       });
     case 'address':
       return new AddressBO({
         addressDAO: DAOFactory.getDAO('address'),
         modelParser: new ModelParser(),
-        dateHelper: new DateHelper(),
-        mutexHelper: new MutexHelper(mutex(settings.mutex)),
+        dateHelper: HelperFactory.getHelper('date'),
         daemonHelper: HelperFactory.getHelper('daemon'),
-        configurationBO: factory('configuration')
+        configurationBO: factory('configuration'),
+        mutexHelper: HelperFactory.getHelper('mutex')
       });
     default:
       return null;

@@ -33,6 +33,7 @@
     "bitcoin-core": "^2.0.0",
     "body-parser": "^1.18.2",
     "cors": "^2.8.4",
+    "decimal.js": "^10.0.0",
     "deepmerge": "^2.0.1",
     "express": "^4.15.5",
     "express-load": "^1.1.16",

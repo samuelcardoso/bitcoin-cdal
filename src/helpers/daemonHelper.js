@@ -10,7 +10,6 @@ module.exports = function(dependencies) {
             return client.listReceivedByAddress(0, true);
           })
           .then(function(r) {
-            console.log(r);
             var addresses = [];
 
             r.forEach(function(item) {

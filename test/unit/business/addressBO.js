@@ -2,8 +2,9 @@ var AddressBO         = require('../../../src/business/addressBO');
 var ModelParser       = require('../../../src/models/modelParser');
 var DaemonHelper      = require('../../../src/helpers/daemonHelper');
 var DateHelper        = require('../../../src/helpers/dateHelper');
-var MutexHelper       = require('../../../src/helpers/mutexHelper');
+var HelperFactory     = require('../../../src/helpers/helperFactory');
 var DAOFactory        = require('../../../src/daos/daoFactory');
+var Decimal           = require('decimal.js')
 var chai              = require('chai');
 var sinon             = require('sinon');
 var expect            = chai.expect;
@@ -13,7 +14,7 @@ describe('Business > AddressBO > ', function() {
   var dateHelper = new DateHelper();
   var modelParser = new ModelParser();
   var daemonHelper = new DaemonHelper({});
-  var mutexHelper = new MutexHelper();
+  var mutexHelper = HelperFactory.getHelper('mutex');
 
   var addressBO = new AddressBO({
     addressDAO: addressDAO,
@@ -225,7 +226,7 @@ describe('Business > AddressBO > ', function() {
           updatedAt: now
         });
 
-      return addressBO.withdraw('address', 0.5, 1)
+      return addressBO.withdraw('address', new Decimal(0.5).toFixed(8), 1)
         .then(function(r){
           expect(r).to.be.deep.equal({
             id: 'ID',
@@ -353,7 +354,7 @@ describe('Business > AddressBO > ', function() {
           updatedAt: now
         });
 
-      return addressBO.withdraw('address', 0.5, 0)
+      return addressBO.withdraw('address', new Decimal(0.5).toFixed(8), 0)
         .then(function(r){
           expect(r).to.be.deep.equal({
             id: 'ID',
@@ -403,7 +404,7 @@ describe('Business > AddressBO > ', function() {
           updatedAt: now
         }]));
 
-      return addressBO.withdraw('address', 11, 0)
+      return addressBO.withdraw('address', new Decimal(11).toFixed(8), 0)
         .catch(function(r){
           expect(r.error).to.be.equal('INVALID_WALLET_BALANCE');
 

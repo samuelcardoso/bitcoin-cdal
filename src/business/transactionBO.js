@@ -1,5 +1,6 @@
 var Promise         = require('promise');
 var logger          = require('../config/logger');
+var Decimal         = require('decimal.js')
 
 module.exports = function(dependencies) {
   var transactionDAO = dependencies.transactionDAO;
@@ -20,8 +21,12 @@ module.exports = function(dependencies) {
 
         chain
           .then(function() {
+            var p = [];
+            p.push(transactionDAO.clear());
+            p.push(transactionRequestDAO.clear());
+            p.push(blockchainTransactionDAO.clear());
             logger.info('[TransactionBO] Clearing the database');
-            return transactionDAO.clear();
+            return Promise.all(p);
           })
           .then(function() {
             logger.info('[TransactionBO] The database has been cleared');
@@ -203,7 +208,7 @@ module.exports = function(dependencies) {
           })
           .then(function(r) {
             transactionRequest = modelParser.clear(r);
-            return addressBO.withdraw(transactionRequest.from, transactionRequest.amount + transactionRequest.fee, 1);
+            return addressBO.withdraw(transactionRequest.from, new Decimal(transactionRequest.amount).plus(transactionRequest.fee).toFixed(8), 1);
           })
           .then(function() {
             return addressBO.getByAddress(null, transactionRequest.from);
@@ -244,6 +249,8 @@ module.exports = function(dependencies) {
     },
 
     updateBlockchainTransaction: function(transaction, blockchainTransaction) {
+      var self = this;
+      
       return new Promise(function(resolve, reject) {
         var chain = Promise.resolve();
         var rBlockchainTransaction = null;
@@ -288,7 +295,11 @@ module.exports = function(dependencies) {
                 address = blockchainTransaction.address;
               }
 
-              return self.updateBalanceFromBlockchainTransaction(address, blockchainTransaction.category, true, transactionRequest != null, amount)
+              if (blockchainTransaction.category === 'send') {
+                amount = new Decimal(amount).times(-1);
+              }
+
+              return self.updateBalanceFromBlockchainTransaction(address, blockchainTransaction.category, true, true, amount)
                 .then(function() {
                   return transactionDAO.updateIsConfirmedFlag(blockchainTransaction.txid);
                 });
@@ -302,15 +313,15 @@ module.exports = function(dependencies) {
       });
     },
 
-    updateBalanceFromBlockchainTransaction: function(address, category, isConfirmed, existsTransactionRequest, amount) {
+    updateBalanceFromBlockchainTransaction: function(address, category, isConfirmed, existsTransactions, amount) {
       return new Promise(function(resolve, reject) {
         var chain = Promise.resolve();
         return chain
           .then(function() {
             if (isConfirmed) {
-              if (existsTransactionRequest) {
+              if (existsTransactions) {
                 if (category === 'send') {
-                  return addressBO.withdraw(address, -amount, 1);
+                  return addressBO.withdraw(address, amount, 1)
                 } if (category === 'receive') {
                   return addressBO.withdraw(address, amount, 1)
                     .then(function() {
@@ -319,14 +330,17 @@ module.exports = function(dependencies) {
                 }
               } else {
                 if (category === 'send') {
-                  return addressBO.withdraw(address, -amount, 0);
+                  return addressBO.withdraw(address, amount, 0);
                 } if (category === 'receive') {
                   return addressBO.deposit(address, amount, 0);
                 }
               }
-            } else if (!isConfirmed && !existsTransactionRequest) {
+            } else if (!isConfirmed && !existsTransactions) {
               if (category === 'send') {
-                return addressBO.withdraw(address, -amount, 1);
+                return addressBO.withdraw(address, amount, 0)
+                  .then(function() {
+                    return addressBO.deposit(address, amount, 1);
+                  });
               } if (category === 'receive') {
                 return addressBO.deposit(address, amount, 1);
               }
@@ -347,6 +361,7 @@ module.exports = function(dependencies) {
         var addressInfo = null;
         var rBlockchainTransaction = null;
         var minimumConfirmations = 0;
+        var amount = 0;
 
         chain
           .then(function() {
@@ -420,36 +435,43 @@ module.exports = function(dependencies) {
             return addressInfo;
           })
           .then(function() {
-            if (addressInfo) {
-              var newTransaction = {
-                ownerId: addressInfo.ownerId,
-                ownerTransactionId: transactionRequest ? transactionRequest.ownerTransactionId : null,
-                amount: blockchainTransaction.amount + (blockchainTransaction.fee ? blockchainTransaction.fee : 0),
-                isConfirmed: rBlockchainTransaction.isConfirmed,
-                notifications: {
-                  creation: {
-                    isNotified: false
-                  },
-                  confirmation: {
-                    isNotified: false
-                  }
-                },
-                transactionHash: blockchainTransaction.txid,
-                address: address,
-                timestamp: blockchainTransaction.time,
-                createdAt: dateHelper.getNow()
-              };
-              logger.info('[TransactionBO] Saving the transaction', JSON.stringify(newTransaction));
-              return transactionDAO.save(newTransaction);
-            } else {
-              logger.warn('[TransactionBO] This transaction will be ignored. There is no address at database', JSON.stringify(blockchainTransaction));
+            if (!addressInfo) {
+              logger.info('[TransactionBO] Registering the address from daemon', address);
+              return addressBO.registerAddressFromDaemon(null, address);
             }
           })
           .then(function() {
-            var amount = blockchainTransaction.amount + (blockchainTransaction.fee ? blockchainTransaction.fee : 0);
+            var d = new Decimal(blockchainTransaction.amount);
+            amount = d.plus(blockchainTransaction.fee ? blockchainTransaction.fee : 0);
+            
+            var newTransaction = {
+              ownerId: addressInfo ? addressInfo.ownerId : null,
+              ownerTransactionId: transactionRequest ? transactionRequest.ownerTransactionId : null,
+              amount: amount.toFixed(8),
+              isConfirmed: rBlockchainTransaction.isConfirmed,
+              notifications: {
+                creation: {
+                  isNotified: false
+                },
+                confirmation: {
+                  isNotified: false
+                }
+              },
+              transactionHash: blockchainTransaction.txid,
+              address: address,
+              timestamp: blockchainTransaction.time,
+              createdAt: dateHelper.getNow()
+            };
+            logger.info('[TransactionBO] Saving the transaction', JSON.stringify(newTransaction));
+            return transactionDAO.save(newTransaction);
+          })
+          .then(function() {
+            if (blockchainTransaction.category === 'send') {
+              amount = new Decimal(amount).times(-1);
+            }
 
-            console.log(address, rBlockchainTransaction.category, rBlockchainTransaction.isConfirmed, transactionRequest != null, amount);
-            return self.updateBalanceFromBlockchainTransaction(address, rBlockchainTransaction.category, rBlockchainTransaction.isConfirmed, transactionRequest != null, amount);
+            logger.info('[TransactionBO] Updating the balance from blockchain transaction', address, amount.toFixed(8));
+            return self.updateBalanceFromBlockchainTransaction(address, rBlockchainTransaction.category, rBlockchainTransaction.isConfirmed, transactionRequest != null, amount.toFixed(8));
           })
           .then(function() {
             return modelParser.clear(rBlockchainTransaction);

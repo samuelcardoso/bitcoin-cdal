@@ -1,5 +1,5 @@
 module.exports = {
-    mongoUrl : 'mongodb://localhost/cdal-services-test',
+    mongoUrl : 'mongodb://localhost/bitcoin-services-test',
     servicePort : 4100,
     isMongoDebug : true,
 

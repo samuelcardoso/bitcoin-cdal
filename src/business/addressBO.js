@@ -1,4 +1,5 @@
 var logger          = require('../config/logger');
+var Decimal         = require('decimal.js')
 
 module.exports = function(dependencies) {
   var addressDAO = dependencies.addressDAO;
@@ -210,7 +211,7 @@ module.exports = function(dependencies) {
             return self.getByAddress(null, address);
           })
           .then(function(r) {
-            logger.info('[WalletBO.withdraw()] Checking if the wallet has funds', JSON.stringify(r));
+            logger.info('[AddressBO.withdraw()] Checking if the wallet has funds', JSON.stringify(r));
             var referenceBalance = balanceType === 1 ?
                                                    r.balance.locked :
                                                    r.balance.available;
@@ -222,11 +223,11 @@ module.exports = function(dependencies) {
               };
             } else {
               if (balanceType === 1) {
-                logger.info('[WalletBO.withdraw()] Withdrawing funds in the locked balance (address, amount)', address, -amount);
-                r.balance.locked -= amount;
+                logger.info('[AddressBO.withdraw()] Withdrawing funds in the locked balance (address, amount)', address, -amount);
+                r.balance.locked = new Decimal(r.balance.locked).minus(amount).toFixed(8);
               } else {
-                logger.info('[WalletBO.withdraw()] Withdrawing funds in the available balance (address, amount)', address, -amount);
-                r.balance.available -= amount;
+                logger.info('[AddressBO.withdraw()] Withdrawing funds in the available balance (address, amount)', address, -amount);
+                r.balance.available = new Decimal(r.balance.available).minus(amount).toFixed(8);
               }
 
               newAddress = modelParser.prepare(r);
@@ -234,7 +235,7 @@ module.exports = function(dependencies) {
               newAddress.updatedAt = dateHelper.getNow();
 
               logger.debug('[AddressBO] New address balance', JSON.stringify(newAddress));
-              return addressDAO.update(r);
+              return addressDAO.update(newAddress);
             }
           })
           .then(function(r) {
@@ -261,10 +262,10 @@ module.exports = function(dependencies) {
           .then(function(r) {
             if (balanceType === 1) {
               logger.info('[AddressBO] Depositing funds in the locked balance (address, amount)', address, amount);
-              r.balance.locked += amount;
+              r.balance.locked = new Decimal(r.balance.locked).plus(amount).toFixed(8);
             } else {
               logger.info('[AddressBO] Depositing funds in the available balance (address, amount)', address, amount);
-              r.balance.available += amount;
+              r.balance.available = new Decimal(r.balance.available).plus(amount).toFixed(8);
             }
 
             newAddress = modelParser.prepare(r);
@@ -272,7 +273,7 @@ module.exports = function(dependencies) {
             newAddress.updatedAt = dateHelper.getNow();
 
             logger.debug('[AddressBO] New address balance', JSON.stringify(newAddress));
-            return addressDAO.update(r);
+            return addressDAO.update(newAddress);
           })
           .then(function(r) {
             unlock();

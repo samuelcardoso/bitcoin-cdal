@@ -98,6 +98,11 @@ describe('integration > base operations', function(){
       });
     });
 
+    it('03 - should synchronize from block 0', function() {
+      this.timeout(5000000);
+      return bosWorker.synchronizeFromBlock(31200);
+    });
+
     /*
     it('04 - should create a transaction and update the addresses balance', function() {
       this.timeout(20000);

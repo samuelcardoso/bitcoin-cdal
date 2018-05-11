@@ -35,12 +35,44 @@ module.exports = function(dependencies) {
       logger.info('[BOSWorker] Total of blockchain transactions', r.transactions.length);
 
       for (var i = 0; i < r.transactions.length; i++) {
-        logger.info('[BOSWorker] Parsing the transaction', JSON.stringify(r.transactions[i]));
-        p.push(transactionBO.parseTransaction(r.transactions[i]));
+        if (r.transactions[i].category === 'send' || r.transactions[i].category === 'receive' ) {
+          logger.info('[BOSWorker] Parsing the transaction', JSON.stringify(r.transactions[i]));
+
+          var pTransaction = new Promise(function(resolve) {
+            transactionBO.parseTransaction(r.transactions[i])
+              .then(resolve)
+              .catch(resolve);
+          });
+          p.push(pTransaction);
+        }
       }
 
       logger.debug('[BOSWorker] Returning promises', p.length);
       return Promise.all(p);
+    },
+
+    synchronizeFromBlock: function(block) {
+      var self = this;
+
+      return new Promise(function(resolve, reject) {
+        var chain = Promise.resolve();
+
+        chain
+          .then(function() {
+            logger.info('[BOSWorker] Getting the block hash linked to this block number', block);
+            return daemonHelper.getBlockHash(block);
+          })
+          .then(function(r) {
+            logger.info('[BOSWorker] Geeting transactions since block', r);
+            return daemonHelper.listSinceBlock(r);
+          })
+          .then(function(r) {
+            logger.info('[BOSWorker] Transactions from blockchain', r.transactions.length);
+            return self.parseTransactionsFromDaemon(r);
+          })
+          .then(resolve)
+          .catch(reject);
+      });
     },
 
     synchronizeToBlockchain: function() {
@@ -71,16 +103,7 @@ module.exports = function(dependencies) {
               r = 0;
             }
 
-            logger.info('[BOSWorker] Getting the block hash linked to this block number', r);
-            return daemonHelper.getBlockHash(r);
-          })
-          .then(function(r) {
-            logger.info('[BOSWorker] Geeting transactions since block', r);
-            return daemonHelper.listSinceBlock(r);
-          })
-          .then(function(r) {
-            logger.info('[BOSWorker] Transactions from blockchain', r.transactions.length);
-            return self.parseTransactionsFromDaemon(r);
+            return self.synchronizeFromBlock(r);
           })
           .then(function() {
             logger.info('[BOSWorker] Blockchain Observer Service has finished this execution');

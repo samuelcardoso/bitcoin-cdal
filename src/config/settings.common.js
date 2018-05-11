@@ -3,7 +3,7 @@ var util      = require('util');
 module.exports = {
     mongoUrl : util.format('mongodb://%s/%s',
                       process.env.DB_SERVER || 'localhost',
-                      process.env.DB_NAME   || 'cdal-services'),
+                      process.env.DB_NAME   || 'bitcoin-services'),
     servicePort : process.env.PORT || 4000,
     isMongoDebug : true,
     jwt: {

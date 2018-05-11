@@ -7,6 +7,7 @@ var DateHelper        = require('../../../src/helpers/dateHelper');
 var DAOFactory        = require('../../../src/daos/daoFactory');
 var chai              = require('chai');
 var sinon             = require('sinon');
+var Decimal           = require('decimal.js')
 var expect            = chai.expect;
 
 describe('Business > TransactionBO > ', function() {
@@ -38,19 +39,6 @@ describe('Business > TransactionBO > ', function() {
     .returns(Promise.resolve({key: 'minimumConfirmations', value: '6'}));
 
   describe('Methods > ', function() {
-    it('clear', function() {
-      var clearStub = sinon.stub(transactionDAO, 'clear');
-      clearStub
-        .withArgs()
-        .returns(Promise.resolve());
-
-      return transactionBO.clear()
-        .then(function(){
-          expect(clearStub.callCount).to.be.equal(1);
-          clearStub.restore();
-        });
-    });
-
     it('getAll', function() {
       var getAllStub = sinon.stub(transactionDAO, 'getAll');
       getAllStub
@@ -653,7 +641,12 @@ describe('Business > TransactionBO > ', function() {
 
       var withdrawStub = sinon.stub(addressBO, 'withdraw');
       withdrawStub
-        .withArgs('3N6NzVhB5JYzoJDahoauvwSEAJ2gmF5C4sJ', 1.890012, 1)
+        .withArgs('3N6NzVhB5JYzoJDahoauvwSEAJ2gmF5C4sJ', new Decimal(1.890012).toFixed(8), 0)
+        .returns(Promise.resolve());
+
+      var depositStub = sinon.stub(addressBO, 'deposit');
+      depositStub
+        .withArgs('3N6NzVhB5JYzoJDahoauvwSEAJ2gmF5C4sJ', new Decimal(1.890012).toFixed(8), 1)
         .returns(Promise.resolve());
 
       return transactionBO.parseTransaction({
@@ -701,6 +694,7 @@ describe('Business > TransactionBO > ', function() {
           expect(transactionSaveStub.callCount).to.be.equal(1);
           expect(getByAddressStub.callCount).to.be.equal(1);
           expect(withdrawStub.callCount).to.be.equal(1);
+          expect(depositStub.callCount).to.be.equal(1);
 
           getNowStub.restore();
           getAll.restore();
@@ -709,6 +703,7 @@ describe('Business > TransactionBO > ', function() {
           transactionSaveStub.restore();
           getByAddressStub.restore();
           withdrawStub.restore();
+          depositStub.restore();
         });
     });
 
