@@ -38,7 +38,19 @@ module.exports = function(dependencies) {
     },
 
     getBalance: function() {
-      return cliente.getBalance();
+      return client.getBalance();
+    },
+
+    getBlockCount: function() {
+      return client.getBlockCount();
+    },
+
+    getBlockHash: function(blocknumber) {
+      return client.getBlockHash(blocknumber);
+    },
+
+    listSinceBlock: function(blockash) {
+      return client.listSinceBlock(blockash);
     },
 
     getTransactions: function(firstBlockIndex, blockCount, addresses, paymentId) {

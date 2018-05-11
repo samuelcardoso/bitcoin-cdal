@@ -22,371 +22,98 @@ describe('Workers > BOSWorker', function() {
 
   var getByKeyStub = sinon.stub(configurationBO, 'getByKey');
   getByKeyStub
-    .withArgs('currentBlockIndex')
-    .returns(Promise.resolve({
-      key: 'currentBlockIndex',
-      value: 0
-    }));
-  getByKeyStub
-    .withArgs('defaultTransactionsBlockCount')
-    .returns(Promise.resolve({
-      key: 'defaultTransactionsBlockCount',
-      value: 10000
-    }));
-
-  getByKeyStub
     .withArgs('minimumConfirmations')
     .returns(Promise.resolve({
       key: 'minimumConfirmations',
       value: 3
     }));
 
-  var updateWalletBalanceStub = sinon.stub(addressBO, 'updateWalletBalance');
-  updateWalletBalanceStub
-    .withArgs()
-    .returns(Promise.resolve());
-
   it('should run', function() {
-    var getTransactionsStub = sinon.stub(daemonHelper, 'getTransactions');
-    getTransactionsStub
-      .withArgs(0, 1)
-      .returns(Promise.resolve({
-        id: 'test',
-        jsonrpc: '2.0',
-        result: {
-          items: []
-        }
-      }));
+    var now = new Date();
 
-    var getUnconfirmedTransactionHashesStub = sinon.stub(daemonHelper, 'getUnconfirmedTransactionHashes');
-    getUnconfirmedTransactionHashesStub
+    var getBlockCountStub = sinon.stub(daemonHelper, 'getBlockCount');
+    getBlockCountStub
       .withArgs()
-      .returns(Promise.resolve({
-        result: {
-          transactionHashes: ['HASH1']
-        }
-      }));
+      .returns(Promise.resolve(10));
 
-    var getTransactionStub = sinon.stub(daemonHelper, 'getTransaction');
-    getTransactionStub
-      .withArgs('HASH1')
-      .returns(Promise.resolve({
-        result: {
-          transaction: {
-            transactionHash: 'transactionHash'
-          }
-        }
-      }));
+    var getBlockHashStub = sinon.stub(daemonHelper, 'getBlockHash');
+    getBlockHashStub
+      .withArgs(7)
+      .returns(Promise.resolve('127e38ed8be22414326fe6465d54025b89047fc676324efe51c27e99b963973b'));
+
+    var transactions = [{
+      address: '2N6NzVhB5JYzoJDahoauvwSEAJ2gmF5C4sJ',
+      category: 'receive',
+      amount: 1.890,
+      label: '',
+      blockhash: '0fcab413728d24bc507b7811cde4d60bd55d0383a2b419c99b09cab344f55588',
+      blocktime: 1525944061,
+      txid: '028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2',
+      isConfirmed: false,
+      time: 1525944061,
+      timereceived: 1525944061,
+      createdAt: now,
+      updatedAt: now,
+      to: '3N6NzVhB5JYzoJDahoauvwSEAJ2gmF5C4sJ@2N6NzVhB5JYzoJDahoauvwSEAJ2gmF5C4sJ'
+    }, {account: '',
+     address: '2N6NzVhB5JYzoJDahoauvwSEAJ2gmF5C4sJ',
+     category: 'send',
+     amount: -1.11,
+     fee: -0.0008,
+     label: '',
+     vout: 0,
+     confirmations: 5,
+     generated: true,
+     blockhash: '0b6b308caa3a625cd98732b8cd96c59b78a7dc0a82e089027bad6c2dd703a5d8',
+     blockindex: 0,
+     blocktime: 1525988282,
+     txid: 'c85f98664eb36d20d318e908691a6bc5e291e01c38424669d92449691bcd12a7',
+     walletconflicts: [],
+     time: 1525988282,
+     timereceived: 1525988282,
+     'bip125-replaceable': 'no'}];
+
+    var listSinceBlockStub = sinon.stub(daemonHelper, 'listSinceBlock');
+    listSinceBlockStub
+      .withArgs('127e38ed8be22414326fe6465d54025b89047fc676324efe51c27e99b963973b')
+      .returns(Promise.resolve({transactions: transactions}));
 
     var parseTransactionStub = sinon.stub(transactionBO, 'parseTransaction');
     parseTransactionStub
-      .withArgs({
-        result: {
-          transaction: {
-            transactionHash: 'transactionHash'
-          }
-        }
-      })
-      .returns(Promise.resolve({
-        result: {
-          transaction: {
-            transactionHash: 'transactionHash'
-          }
-        }
-      }));
-
-    var getStatusStub = sinon.stub(daemonHelper, 'getStatus');
-    getStatusStub
-      .withArgs()
-      .returns(Promise.resolve({
-        id: 'test',
-        jsonrpc: '2.0',
-        result:{
-          blockCount: 5000,
-          knownBlockCount: 5000,
-          lastBlockHash: 'bf95d3a66d2b23c5bca14aa5274ade97c024f8196285ad4654e5e699d195cde2',
-          peerCount:76
-        }
-      }));
-
-      var t1 = {
-        amount: 47400000,
-        blockIndex: 545,
-        confirmations: 122,
-        extra: '',
-        fee: 1000,
-        isBase: false,
-        paymentId: '',
-        state: 0,
-        timestamp: 1521369392,
-        transactionHash: 'transactionHash',
-        transfers: [{
-          address: 'address',
-          amount: 47400000,
-          type: 0
-        }, {
-          address: '',
-          amount: -600000000,
-          type: 0
-        }, {
-          address: '',
-          amount: 552599000,
-          type: 0
-        }],
-        unlockTime: 0
-      };
-
-      var t2 = {
-        amount: 3000000000,
-        blockIndex: 545,
-        confirmations: 122,
-        extra: '',
-        fee: 10000,
-        isBase: false,
-        paymentId: 'paymentId',
-        state: 0,
-        timestamp: 1521369392,
-        transactionHash: 'transactionHash',
-        transfers: [{
-          address: 'address',
-          amount: 3000000000,
-          type: 0
-        }, {
-          address: '',
-          amount: -3057000000,
-          type: 0
-        }, {
-          address: '',
-          amount: 56990000,
-          type: 0
-        }],
-        unlockTime: 0
-      };
-
-    getTransactionsStub
-      .withArgs(0, 10000)
-      .returns(Promise.resolve({
-        id: 'test',
-        jsonrpc: '2.0',
-        result: {
-          items: [{
-            blockHash: 'blockHash',
-            transactions: [t1, t2]
-          }]
-        }
-      }));
-
-    getTransactionsStub
-      .withArgs(0, 1)
-      .returns(Promise.resolve({
-        id: 'test',
-        jsonrpc: '2.0',
-        result: {
-          items: [{
-            blockHash: 'blockHash',
-            transactions: []
-          }]
-        }
-      }));
+      .withArgs(transactions[0])
+      .returns(Promise.resolve());
 
     parseTransactionStub
-      .withArgs(t1)
-      .returns(Promise.resolve(t1));
-    parseTransactionStub
-      .withArgs(t2)
-      .returns(Promise.resolve(t2));
-
-    var updateStub = sinon.stub(configurationBO, 'update');
-    updateStub
-      .withArgs({
-        key: 'currentBlockIndex',
-        value: 9999
-      })
-      .returns(Promise.resolve({
-        key: 'currentBlockIndex',
-        value: 9999
-      }));
-
-    var updateIsConfirmedFlagStub = sinon.stub(transactionBO, 'updateIsConfirmedFlag');
-    updateIsConfirmedFlagStub
-    .withArgs(-3)
-    .returns(Promise.resolve());
+      .withArgs(transactions[0])
+      .returns(Promise.resolve());
 
     return bosWorker.synchronizeToBlockchain()
       .then(function(r) {
-        expect(getUnconfirmedTransactionHashesStub.callCount).to.be.equal(1);
-        expect(getTransactionStub.callCount).to.be.equal(1);
-        expect(getStatusStub.callCount).to.be.equal(1);
-        expect(parseTransactionStub.callCount).to.be.equal(3);
-        expect(updateStub.callCount).to.be.equal(1);
         expect(r).to.be.true;
+        expect(getBlockCountStub.callCount).to.be.equal(1);
+        expect(getBlockHashStub.callCount).to.be.equal(1);
+        expect(listSinceBlockStub.callCount).to.be.equal(1);
+        expect(parseTransactionStub.callCount).to.be.equal(2);
 
-        getUnconfirmedTransactionHashesStub.restore();
-        getTransactionStub.restore();
-        getTransactionsStub.restore();
-        getStatusStub.restore();
-        parseTransactionStub.restore();
-        updateStub.restore();
-      });
-  });
-
-  it('should not crash when the daemon (getStatus) returns an error', function() {
-    var getUnconfirmedTransactionHashesStub = sinon.stub(daemonHelper, 'getUnconfirmedTransactionHashes');
-    getUnconfirmedTransactionHashesStub
-      .withArgs()
-      .returns(Promise.resolve({
-        result: {
-          transactionHashes: ['HASH1']
-        }
-      }));
-
-    var getTransactionStub = sinon.stub(daemonHelper, 'getTransaction');
-    getTransactionStub
-      .withArgs('HASH1')
-      .returns(Promise.resolve({
-        result: {
-          transaction: {
-            transactionHash: 'transactionHash'
-          }
-        }
-      }));
-
-    var parseTransactionStub = sinon.stub(transactionBO, 'parseTransaction');
-    parseTransactionStub
-      .withArgs({
-        result: {
-          transaction: {
-            transactionHash: 'transactionHash'
-          }
-        }
-      })
-      .returns(Promise.resolve({
-        result: {
-          transaction: {
-            transactionHash: 'transactionHash'
-          }
-        }
-      }));
-
-    var getStatusStub = sinon.stub(daemonHelper, 'getStatus');
-    getStatusStub
-      .withArgs()
-      .returns(Promise.reject({
-        error:{
-          code: -32601,
-          message: 'Method not found'
-        },
-        id: 'test',
-        jsonrpc: '2.0'
-      }));
-
-    return bosWorker.synchronizeToBlockchain()
-      .then(function(r) {
-        expect(getUnconfirmedTransactionHashesStub.callCount).to.be.equal(1);
-        expect(getTransactionStub.callCount).to.be.equal(1);
-        expect(getStatusStub.callCount).to.be.equal(1);
-        expect(parseTransactionStub.callCount).to.be.equal(1);
-        expect(r).to.be.true;
-
-        getUnconfirmedTransactionHashesStub.restore();
-        getTransactionStub.restore();
-        getStatusStub.restore();
+        getBlockCountStub.restore();
+        getBlockHashStub.restore();
+        listSinceBlockStub.restore();
         parseTransactionStub.restore();
       });
   });
 
-  it('should not crash when the daemon (getTransactions) returns an error', function() {
-    var getUnconfirmedTransactionHashesStub = sinon.stub(daemonHelper, 'getUnconfirmedTransactionHashes');
-    getUnconfirmedTransactionHashesStub
+  it('should not fail when the daemon returns an error (getBlockCount)', function() {
+    var getBlockCountStub = sinon.stub(daemonHelper, 'getBlockCount');
+    getBlockCountStub
       .withArgs()
-      .returns(Promise.resolve({
-        result: {
-          transactionHashes: ['HASH1']
-        }
-      }));
-
-    var getTransactionStub = sinon.stub(daemonHelper, 'getTransaction');
-    getTransactionStub
-      .withArgs('HASH1')
-      .returns(Promise.resolve({
-        result: {
-          transaction: {
-            transactionHash: 'transactionHash'
-          }
-        }
-      }));
-
-    var parseTransactionStub = sinon.stub(transactionBO, 'parseTransaction');
-    parseTransactionStub
-      .withArgs({
-        result: {
-          transaction: {
-            transactionHash: 'transactionHash'
-          }
-        }
-      })
-      .returns(Promise.resolve({
-        result: {
-          transaction: {
-            transactionHash: 'transactionHash'
-          }
-        }
-      }));
-
-    var getStatusStub = sinon.stub(daemonHelper, 'getStatus');
-    getStatusStub
-      .withArgs()
-      .returns(Promise.resolve({
-        id: 'test',
-        jsonrpc: '2.0',
-        result:{
-          blockCount: 5000,
-          knownBlockCount: 5000,
-          lastBlockHash: 'bf95d3a66d2b23c5bca14aa5274ade97c024f8196285ad4654e5e699d195cde2',
-          peerCount:76
-        }
-      }));
-
-    var getTransactionsStub = sinon.stub(daemonHelper, 'getTransactions');
-    getTransactionsStub
-      .withArgs(0, 10000)
-      .returns(Promise.reject({
-        error:{
-          code: -32601,
-          message: 'Method not found'
-        },
-        id: 'test',
-        jsonrpc: '2.0'
-      }));
+      .returns(Promise.reject());
 
     return bosWorker.synchronizeToBlockchain()
       .then(function(r) {
-        expect(getUnconfirmedTransactionHashesStub.callCount).to.be.equal(1);
-        expect(getStatusStub.callCount).to.be.equal(1);
-        expect(getTransactionsStub.callCount).to.be.equal(2);
         expect(r).to.be.true;
+        expect(getBlockCountStub.callCount).to.be.equal(1);
 
-        getUnconfirmedTransactionHashesStub.restore();
-        getTransactionsStub.restore();
-        getStatusStub.restore();
-      });
-  });
-
-  it('should not crash when the daemon (getUnconfirmedTransactionHashes) returns an error', function() {
-    var getUnconfirmedTransactionHashesStub = sinon.stub(daemonHelper, 'getUnconfirmedTransactionHashes');
-    getUnconfirmedTransactionHashesStub
-      .withArgs()
-      .returns(Promise.resolve({
-        error: {
-        }
-      }));
-
-    return bosWorker.synchronizeToBlockchain()
-      .then(function(r) {
-        expect(getUnconfirmedTransactionHashesStub.callCount).to.be.equal(1);
-        expect(r).to.be.true;
-
-        getUnconfirmedTransactionHashesStub.restore();
+        getBlockCountStub.restore();
       });
   });
 });

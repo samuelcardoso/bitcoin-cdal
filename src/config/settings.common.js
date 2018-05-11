@@ -12,13 +12,10 @@ module.exports = {
     },
 
     defaultSettings: {
-      minimumConfirmations: 3,
+      minimumConfirmations: 6,
       minimumAddressPoolSize: 100,
       transactionNotificationAPI: util.format('http://%s/v1/transactions/notifications', process.env.NOTIFICATION_ADDRESS || 'localhost:3001'),
-      daemonEndpoint: util.format('http://%s/json_rpc', process.env.DAEMON_ADDRESS || '18.216.105.158:20264'),
-      currentBlockIndex: 0,
-      defaultTransactionsBlockCount: 5000,
-      minimumFee: 1000
+      daemonEndpoint: util.format('http://%s/json_rpc', process.env.DAEMON_ADDRESS || '18.216.105.158:20264')
     },
 
     mutex: {
