@@ -59,13 +59,5 @@ module.exports = function() {
         .then(rh.ok)
         .catch(rh.error);
     },
-
-    delete: function(req, res) {
-      var rh = new HTTPResponseHelper(req, res);
-
-      business.delete(req.params.ownerId, req.params.address)
-        .then(rh.ok)
-        .catch(rh.error);
-    },
   };
 };

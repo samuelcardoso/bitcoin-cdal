@@ -20,4 +20,11 @@ module.exports = {
 
     mutex: {
     },
+
+    daemonSettings: {
+      host: 'daemons.kernelits.net',
+      port:'10464',
+      username: 'rpc',
+      password: 'MwiW0_d46_odBTzhTtUuaJGR4SHDvTOaaClph7737ec='
+    }
   };

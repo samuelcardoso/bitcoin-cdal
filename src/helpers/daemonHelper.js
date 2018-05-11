@@ -5,27 +5,19 @@ module.exports = function(dependencies) {
     getAddresses: function() {
       return new Promise(function(resolve, reject) {
         var chain = Promise.resolve();
-
         return chain
           .then(function() {
-            return client.listAddressGroupings();
+            return client.listReceivedByAddress(0, true);
           })
           .then(function(r) {
-            var mapAddresses = function(r, addresses) {
-              if (!addresses) {
-                addresses = [];
-              }
+            console.log(r);
+            var addresses = [];
 
-              r.forEach(function(item) {
-                if (Array.isArray(item[0])) {
-                  mapAddresses(item, addresses);
-                } else {
-                  addresses.push(item[0]);
-                }
-              });
+            r.forEach(function(item) {
+              addresses.push(item.address);
+            });
 
-              return addresses;
-            };
+            return addresses;
             return mapAddresses(r);
           })
           .then(resolve)

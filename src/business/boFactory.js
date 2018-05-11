@@ -3,12 +3,11 @@ var AddressBO                   = require('./addressBO');
 var ConfigurationBO             = require('./configurationBO');
 var DAOFactory                  = require('../daos/daoFactory');
 var ModelParser                 = require('../models/modelParser');
-var DaemonHelper                = require('../helpers/daemonHelper');
-var RequestHelper               = require('../helpers/requestHelper');
 var DateHelper                  = require('../helpers/dateHelper');
 var MutexHelper                 = require('../helpers/dateHelper');
 var mutex                       = require( 'node-mutex' );
 var settings                    = require('../config/settings');
+var HelperFactory               = require('../helpers/helperFactory');
 
 function factory(dao) {
   switch (dao) {
@@ -26,12 +25,7 @@ function factory(dao) {
         transactionRequestDAO: DAOFactory.getDAO('transactionRequest'),
         blockchainTransactionDAO: DAOFactory.getDAO('blockchainTransaction'),
         modelParser: new ModelParser(),
-        daemonHelper: new DaemonHelper({
-          requestHelper: new RequestHelper({
-            request: require('request')
-          }),
-          configurationBO: factory('configuration')
-        }),
+        daemonHelper: HelperFactory.getHelper('daemon'),
         dateHelper: new DateHelper()
       });
     case 'address':
@@ -40,12 +34,7 @@ function factory(dao) {
         modelParser: new ModelParser(),
         dateHelper: new DateHelper(),
         mutexHelper: new MutexHelper(mutex(settings.mutex)),
-        daemonHelper: new DaemonHelper({
-          requestHelper: new RequestHelper({
-            request: require('request')
-          }),
-          configurationBO: factory('configuration')
-        }),
+        daemonHelper: HelperFactory.getHelper('daemon'),
         configurationBO: factory('configuration')
       });
     default:

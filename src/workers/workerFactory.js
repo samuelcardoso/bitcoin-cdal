@@ -4,8 +4,7 @@ var TNSWorker           = require('./tnsWorker');
 var AAPMSWorker         = require('./aapmsWorker');
 var BOSWorker           = require('./bosWorker');
 var DateHelper          = require('../helpers/dateHelper');
-var DaemonHelper        = require('../helpers/daemonHelper');
-var RequestHelper       = require('../helpers/requestHelper');
+var HelperFactory       = require('../helpers/helperFactory');
 
 module.exports = {
   getWorker: function(woker) {
@@ -15,21 +14,14 @@ module.exports = {
           dateHelper: new DateHelper(),
           addressBO: BOFactory.getBO('address'),
           configurationBO: BOFactory.getBO('configuration'),
-          daemonHelper: new DaemonHelper({
-            requestHelper: new RequestHelper({
-              request: require('request')
-            }),
-            configurationBO: BOFactory.getBO('configuration')
-          })
+          daemonHelper: HelperFactory.getHelper('daemon')
         });
       case 'tns':
         return new TNSWorker({
           dateHelper: new DateHelper(),
           addressBO: BOFactory.getBO('address'),
           transactionBO: BOFactory.getBO('transaction'),
-          requestHelper: new RequestHelper({
-            request: require('request')
-          }),
+          requestHelper: HelperFactory.getHelper('request'),
           configurationBO: BOFactory.getBO('configuration')
         });
       case 'bos':
@@ -38,12 +30,7 @@ module.exports = {
           addressBO: BOFactory.getBO('address'),
           transactionBO: BOFactory.getBO('transaction'),
           configurationBO: BOFactory.getBO('configuration'),
-          daemonHelper: new DaemonHelper({
-            requestHelper: new RequestHelper({
-              request: require('request')
-            }),
-            configurationBO: BOFactory.getBO('configuration')
-          })
+          daemonHelper: HelperFactory.getHelper('daemon')
         });
       default:
         return null;

@@ -12,7 +12,6 @@ module.exports = function(app) {
     .get(controller.getByAddress);
 
   app.route('/v1/:ownerId/addresses/:address')
-    .delete(controller.delete)
     .get(controller.getByAddress)
     .put(controller.update);
 };
