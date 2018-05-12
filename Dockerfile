@@ -4,7 +4,7 @@ ARG VERSION=master
 ENV VERSION=${VERSION}
 
 LABEL maintainer="gleisson.assis@gmail.com"
-LABEL source="https://github.com/gleissonassis/cryptonote-cdal.git"
+LABEL source="https://github.com/gleissonassis/bitcoin-cdal.git"
 LABEL version="${VERSION}"
 
 ADD entrypoint.sh /
