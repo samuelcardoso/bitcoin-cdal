@@ -2,12 +2,11 @@ var TransactionBO     = require('../../../src/business/transactionBO');
 var AddressBO         = require('../../../src/business/addressBO');
 var ConfiguratonBO    = require('../../../src/business/configurationBO');
 var ModelParser       = require('../../../src/models/modelParser');
-var DaemonHelper      = require('../../../src/helpers/daemonHelper');
-var DateHelper        = require('../../../src/helpers/dateHelper');
 var DAOFactory        = require('../../../src/daos/daoFactory');
+var HelperFactory     = require('../../../src/helpers/helperFactory');
 var chai              = require('chai');
 var sinon             = require('sinon');
-var Decimal           = require('decimal.js')
+var Decimal           = require('decimal.js');
 var expect            = chai.expect;
 
 describe('Business > TransactionBO > ', function() {
@@ -15,11 +14,12 @@ describe('Business > TransactionBO > ', function() {
   var transactionRequestDAO = DAOFactory.getDAO('transactionRequest');
   var blockchainTransactionDAO = DAOFactory.getDAO('blockchainTransaction');
   var addressDAO = DAOFactory.getDAO('address');
-  var dateHelper = new DateHelper();
+  var dateHelper = HelperFactory.getHelper('date');
   var modelParser = new ModelParser();
   var addressBO = new AddressBO({});
   var configurationBO = new ConfiguratonBO({});
-  var daemonHelper = new DaemonHelper({});
+  var daemonHelper = HelperFactory.getHelper('daemon');
+  var mutexHelper = HelperFactory.getHelper('mutex');
 
   var transactionBO = new TransactionBO({
     transactionRequestDAO: transactionRequestDAO,
@@ -30,7 +30,8 @@ describe('Business > TransactionBO > ', function() {
     addressDAO: addressDAO,
     modelParser: modelParser,
     dateHelper: dateHelper,
-    daemonHelper: daemonHelper
+    daemonHelper: daemonHelper,
+    mutexHelper: mutexHelper
   });
 
   var getByKeyStub = sinon.stub(configurationBO, 'getByKey');
@@ -58,11 +59,21 @@ describe('Business > TransactionBO > ', function() {
       var now = new Date();
       dateHelper.setNow(now);
 
+      var estimateSmartFeeStub = sinon.stub(daemonHelper, 'estimateSmartFee');
+      estimateSmartFeeStub
+        .withArgs()
+        .returns(Promise.resolve(new Decimal(0.1).toFixed(8)));
+
+      var checkHasFundsStub = sinon.stub(addressBO, 'checkHasFunds');
+      checkHasFundsStub
+        .withArgs('addressFrom', new Decimal(1.11).toFixed(8), 0)
+        .returns(Promise.resolve(true));
+
       var transactionRequestSaveStub = sinon.stub(transactionRequestDAO, 'save');
       transactionRequestSaveStub
         .withArgs({
           ownerId: 'ownerId',
-          transactionOwnerId: 'transactionOwnerId',
+          ownerTransactionId: 'ownerTransactionId',
           from: 'addressFrom',
           to: 'addressTo',
           amount: 1,
@@ -74,7 +85,7 @@ describe('Business > TransactionBO > ', function() {
         .returns(Promise.resolve({
           _id: 'ID',
           ownerId: 'ownerId',
-          transactionOwnerId: 'transactionOwnerId',
+          ownerTransactionId: 'ownerTransactionId',
           from: 'addressFrom',
           to: 'addressTo',
           amount: 1,
@@ -137,7 +148,7 @@ describe('Business > TransactionBO > ', function() {
         .withArgs({
           _id: 'ID',
           ownerId: 'ownerId',
-          transactionOwnerId: 'transactionOwnerId',
+          ownerTransactionId: 'ownerTransactionId',
           to: 'addressTo',
           from: 'addressFrom',
           amount: 1,
@@ -152,7 +163,7 @@ describe('Business > TransactionBO > ', function() {
         .returns(Promise.resolve({
           _id: 'ID',
           ownerId: 'ownerId',
-          transactionOwnerId: 'transactionOwnerId',
+          ownerTransactionId: 'ownerTransactionId',
           to: 'addressTo',
           from: 'addressFrom',
           amount: 1,
@@ -180,12 +191,12 @@ describe('Business > TransactionBO > ', function() {
 
       var depositStub = sinon.stub(addressBO, 'deposit');
       depositStub
-        .withArgs('addressFrom', 1.000197, 1)
+        .withArgs('addressFrom', new Decimal(1).toFixed(8), 1)
         .returns(Promise.resolve());
 
       return transactionBO.save({
         ownerId: 'ownerId',
-        transactionOwnerId: 'transactionOwnerId',
+        ownerTransactionId: 'ownerTransactionId',
         from: 'addressFrom',
         to: 'addressTo',
         amount: 1,
@@ -195,7 +206,7 @@ describe('Business > TransactionBO > ', function() {
           expect(r).to.be.deep.equal({
             id: 'ID',
             ownerId: 'ownerId',
-            transactionOwnerId: 'transactionOwnerId',
+            ownerTransactionId: 'ownerTransactionId',
             to: 'addressTo',
             from: 'addressFrom',
             amount: 1,
@@ -208,6 +219,20 @@ describe('Business > TransactionBO > ', function() {
             fee: 0.000197
           });
 
+          expect(estimateSmartFeeStub.callCount).to.be.equal(1);
+          expect(checkHasFundsStub.callCount).to.be.equal(1);
+
+          expect(transactionRequestSaveStub.callCount).to.be.equal(1);
+          expect(transactionRequestUpdateStub.callCount).to.be.equal(2);
+          expect(sendTransactionStub.callCount).to.be.equal(1);
+
+          expect(getTransactionStub.callCount).to.be.equal(1);
+          expect(withdrawStub.callCount).to.be.equal(1);
+          expect(getByAddressStub.callCount).to.be.equal(1);
+          expect(depositStub.callCount).to.be.equal(1);
+
+          estimateSmartFeeStub.restore();
+          checkHasFundsStub.restore();
           transactionRequestSaveStub.restore();
           transactionRequestUpdateStub.restore();
           sendTransactionStub.restore();

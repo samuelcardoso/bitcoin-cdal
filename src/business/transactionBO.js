@@ -1,6 +1,6 @@
 var Promise         = require('promise');
 var logger          = require('../config/logger');
-var Decimal         = require('decimal.js')
+var Decimal         = require('decimal.js');
 
 module.exports = function(dependencies) {
   var transactionDAO = dependencies.transactionDAO;
@@ -11,6 +11,7 @@ module.exports = function(dependencies) {
   var addressBO = dependencies.addressBO;
   var configurationBO = dependencies.configurationBO;
   var dateHelper = dependencies.dateHelper;
+  var mutexHelper = dependencies.mutexHelper;
 
   return {
     dependencies: dependencies,
@@ -157,13 +158,32 @@ module.exports = function(dependencies) {
     },
 
     save: function(entity) {
-      var chain = Promise.resolve();
 
       return new Promise(function(resolve, reject) {
+        var chain = mutexHelper.lock('transaction/' + entity.from);
+        var unlock = null;
         var transactionRequest = entity;
 
         return chain
-          .then(function() {
+          .then(function(r) {
+            unlock = r;
+            logger.info('[TransactionBO.save()] Estimating the fee');
+            return daemonHelper.estimateSmartFee();
+          })
+          .then(function(r) {
+            logger.info('[TransactionBO.save()] Estimated fee', r);
+            var amountToCheck = new Decimal(r).times(1.1).plus(entity.amount).toFixed(8);
+            return addressBO.checkHasFunds(entity.from, amountToCheck, 0);
+          })
+          .then(function(r) {
+            if (!r) {
+              throw {
+                status: 409,
+                error: 'INVALID_WALLET_BALANCE',
+                message: 'The wallet does not have funds to withdraw ' + entity.amount + ''
+              };
+            }
+
             transactionRequest.status = 0;
             transactionRequest.createdAt = dateHelper.getNow();
             transactionRequest.commentTo = transactionRequest.from + '@' + transactionRequest.to;
@@ -193,6 +213,7 @@ module.exports = function(dependencies) {
             return transactionRequestDAO.update(transactionRequest);
           })
           .then(function(){
+            console.log('BBBBBB', transactionRequest);
             logger.info('[TransactionBO] Getting transaction information by transactionHash', transactionRequest.transactionHash);
             return daemonHelper.getTransaction(transactionRequest.transactionHash);
           })
@@ -206,19 +227,26 @@ module.exports = function(dependencies) {
             logger.info('[TransactionBO] Updating the transaction request ', JSON.stringify(transactionRequest));
             return transactionRequestDAO.update(transactionRequest);
           })
-          .then(function(r) {
-            transactionRequest = modelParser.clear(r);
-            return addressBO.withdraw(transactionRequest.from, new Decimal(transactionRequest.amount).plus(transactionRequest.fee).toFixed(8), 1);
+          .then(function() {
+            var amountToWithdraw = new Decimal(transactionRequest.amount).plus(transactionRequest.fee).toFixed(8);
+            logger.info('[TransactionBO] Withdrawing the amount + fee from the wallet', transactionRequest.from, amountToWithdraw);
+            return addressBO.withdraw(transactionRequest.from, amountToWithdraw, 0)
+              .then(function() {
+                return addressBO.deposit(transactionRequest.from, amountToWithdraw, 1);
+              });
           })
           .then(function() {
-            return addressBO.getByAddress(null, transactionRequest.from);
+            return addressBO.getByAddress(null, transactionRequest.to);
           })
           .then(function(r) {
             if (r) {
-              return addressBO.deposit(r.address, transaction.amount, 1);
+              var amountToDeposit = new Decimal(transactionRequest.amount).toFixed(8);
+              logger.info('[TransactionBO] Despositing the amount to wallet', r.address, amountToDeposit);
+              return addressBO.deposit(r.address, amountToDeposit, 1);
             }
           })
           .then(function(){
+            unlock();
             return transactionRequest;
           })
           .then(resolve)
@@ -250,7 +278,7 @@ module.exports = function(dependencies) {
 
     updateBlockchainTransaction: function(transaction, blockchainTransaction) {
       var self = this;
-      
+
       return new Promise(function(resolve, reject) {
         var chain = Promise.resolve();
         var rBlockchainTransaction = null;
@@ -321,7 +349,7 @@ module.exports = function(dependencies) {
             if (isConfirmed) {
               if (existsTransactions) {
                 if (category === 'send') {
-                  return addressBO.withdraw(address, amount, 1)
+                  return addressBO.withdraw(address, amount, 1);
                 } if (category === 'receive') {
                   return addressBO.withdraw(address, amount, 1)
                     .then(function() {
@@ -443,7 +471,7 @@ module.exports = function(dependencies) {
           .then(function() {
             var d = new Decimal(blockchainTransaction.amount);
             amount = d.plus(blockchainTransaction.fee ? blockchainTransaction.fee : 0);
-            
+
             var newTransaction = {
               ownerId: addressInfo ? addressInfo.ownerId : null,
               ownerTransactionId: transactionRequest ? transactionRequest.ownerTransactionId : null,

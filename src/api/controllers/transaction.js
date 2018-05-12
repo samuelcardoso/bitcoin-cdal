@@ -69,7 +69,7 @@ module.exports = function() {
       req.body.ownerId = req.params.ownerId;
 
       if (req.params.address) {
-        req.body.addresses = [req.params.address];
+        req.body.from = [req.params.address];
       }
       business.save(req.body)
         .then(function(r) {
@@ -83,16 +83,12 @@ module.exports = function() {
 
       var filter = {};
 
-      if (req.params.ownerId) {
-        filter.ownerId = req.params.ownerId;
-      }
-
       if (req.params.address) {
         filter.address = req.params.address;
       }
 
       if (req.params.transactionHash) {
-        filter.transactionHash = req.params.transactionHash;
+        filter.txid = req.params.transactionHash;
       }
 
       business.getBlockchainTransactionByTransaction(filter)

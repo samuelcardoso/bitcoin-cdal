@@ -52,7 +52,7 @@ module.exports = function(dependencies) {
         function (error, response, body) {
           if (error) {
             logger.error('[RequestHelper] An error has ocurred while posting to ', url, headers, data, error, body);
-            reject(body);
+            reject({error: error, body: body});
           } else {
             var status = allwedStatus || [];
 

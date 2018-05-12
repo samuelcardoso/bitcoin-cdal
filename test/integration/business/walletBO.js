@@ -181,5 +181,39 @@ describe('integration > base operations', function(){
           expect(r.balance.locked).to.be.equal(500);
         });
     });
+
+    it('should perform a transaction', function() {
+      var chain = Promise.resolve();
+
+      return chain
+        .then(function() {
+          return transactionBO.parseTransaction({
+            account: '',
+            address: '2MzpBrGk3PpRSdfb5Q9YAWkQQ1n33NamJvP',
+            category: 'send',
+            amount: -500,
+            fee: -0.00000892,
+            label: '',
+            vout: 1,
+            confirmations: 5,
+            blockhash: '3d172462491d73aa7e30ab2faf1782ef192497e148c8f43f68b7b399c0f7f347',
+            blockindex: 1,
+            blocktime: 1525843621,
+            txid: '67b61e73faaff7dea1b958681d910d892702aad060124c64ab0f08309376050e',
+            walletconflicts: [],
+            time: 1525843584,
+            timereceived: 1525843584,
+            'bip125-replaceable': 'no'
+          });
+        })
+        .then(function() {
+          return addressBO.getByAddress(null, '2MzpBrGk3PpRSdfb5Q9YAWkQQ1n33NamJvP');
+        })
+        .then(function(r) {
+          console.log(r);
+          expect(r.balance.available).to.be.equal(909.99999108);
+          expect(r.balance.locked).to.be.equal(500);
+        });
+    });
   });
 });

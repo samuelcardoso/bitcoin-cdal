@@ -22,8 +22,6 @@ module.exports = function(app) {
     .get(controller.getAll);
   app.route('/v1/addresses/:address/transactions/:transactionHash')
     .get(controller.getAll);
-  app.route('/v1/addresses/:address/transactions/:transactionHash/blockchain-transaction')
-    .get(controller.getBlockchainTransactionByTransaction);
 
   app.route('/v1/:ownerId/addresses/:address/transactions')
     .get(controller.getAll)

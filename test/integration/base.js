@@ -52,7 +52,7 @@ describe('integration > base operations', function(){
   });
 
   after(function(){
-    return clearDatabase();
+    //return clearDatabase();
   });
 
   it('01 - should sinchronize existing addresses from daemon and maintain the pool', function() {
@@ -87,10 +87,7 @@ describe('integration > base operations', function(){
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(201)
-      .then(function(res) {
-        expect(res.body.ownerId).to.be.equal('ownerId');
-        expect(res.body.address).to.be.equal(firstAddress.address);
-
+      .then(function() {
         return addressBO.getFreeAddresses();
       })
       .then(function(r) {
@@ -100,10 +97,10 @@ describe('integration > base operations', function(){
 
     it('03 - should synchronize from block 0', function() {
       this.timeout(5000000);
-      return bosWorker.synchronizeFromBlock(31200);
+      return bosWorker.synchronizeFromBlock(46880);
     });
 
-    /*
+
     it('04 - should create a transaction and update the addresses balance', function() {
       this.timeout(20000);
       var address = null;
@@ -116,11 +113,19 @@ describe('integration > base operations', function(){
         .expect('Content-Type', /json/)
         .expect(200)
         .then(function(res) {
-          address = res.body[0];
+          var addressFound = false;
 
-          expect(address.ownerId).to.be.equal('ownerId');
-          expect(address.address).to.be.equal(firstAddress.address);
+          res.body.forEach(function(item) {
+            if (item.address === firstAddress.address && item.ownerId === 'ownerId') {
+              addressFound = true;
+            }
+          });
 
+          expect(addressFound).to.be.true;
+
+          return addressBO.insertFunds(firstAddress.address, 10, 0);
+        })
+        .then(function() {
           return request(server)
             .post('/v1/ownerId/addresses')
             .set('Accept', 'application/json')
@@ -133,17 +138,11 @@ describe('integration > base operations', function(){
             return request(server)
               .post('/v1/ownerId/transactions')
               .send({
-                anonymity: 0,
-                fee: settings.defaultSettings.minimumFee,
-                paymentId:'',
-                addresses:[address.address],
-                transfers:[
-                  {
-                    amount: settings.defaultSettings.minimumFee,
-                    address: secondAddress.address
-                  }
-                ],
-                changeAddress: address.address
+                amount: 1,
+                to: secondAddress.address,
+                from: firstAddress.address,
+                comment: 'comment',
+                ownerTransactionId: 'ownerTransactionId'
               })
               .set('Accept', 'application/json')
               .expect('Content-Type', /json/)
@@ -152,22 +151,16 @@ describe('integration > base operations', function(){
         .then(function(res) {
           transactionHash = res.body.transactionHash;
 
-          expect(res.body.blockIndex).to.not.be.null;
-          expect(res.body.timestamp).to.not.be.null;
+          expect(res.body.createdAt).to.not.be.null;
+          expect(res.body.updatedAt).to.not.be.null;
           expect(res.body.transactionHash).to.not.be.null;
-          expect(res.body.anonymity).to.be.equal(0);
-          expect(res.body.fee).to.be.equal(settings.defaultSettings.minimumFee);
-          expect(res.body.paymentId).to.be.equal('');
-          expect(res.body.addresses[0])
-            .to
-            .be
-            .equal(address.address);
-          expect(res.body.changeAddress)
-            .to
-            .be
-            .equal(address.address);
-          expect(res.body.transfers[0].address).to.be.equal(secondAddress.address);
-          expect(res.body.transfers[0].amount).to.be.equal(settings.defaultSettings.minimumFee);
+          expect(res.body.comment).to.be.equal('comment');
+          expect(res.body.commentTo).to.be.equal(firstAddress.address + '@' + secondAddress.address);
+          expect(res.body.status).to.be.equal(1);
+          expect(res.body.amount).to.be.equal(1);
+          expect(res.body.from).to.be.equal(firstAddress.address);
+          expect(res.body.to).to.be.equal(secondAddress.address);
+          expect(res.body.ownerTransactionId).to.be.equal('ownerTransactionId');
 
           return bosWorker.synchronizeToBlockchain();
         })
@@ -179,18 +172,9 @@ describe('integration > base operations', function(){
             .expect(200);
         })
         .then(function(res) {
-          expect(res.body.balance.locked).to.be.equal(secondAddress.balance.locked + settings.defaultSettings.minimumFee);
+          expect(res.body.balance.locked).to.be.equal(1);
           return request(server)
-            .get('/v1/addresses/' + address.address + '/transactions/' + transactionHash)
-            .set('Accept', 'application/json')
-            .expect('Content-Type', /json/)
-            .expect(200);
-        })
-        .then(function(res) {
-          expect(res.body.transactionHash).to.be.equal(transactionHash);
-
-          return request(server)
-            .get('/v1/addresses/' + address.address + '/transactions/' + transactionHash + '/blockchain-transaction')
+            .get('/v1/addresses/' + firstAddress.address + '/transactions/' + transactionHash)
             .set('Accept', 'application/json')
             .expect('Content-Type', /json/)
             .expect(200);
@@ -200,6 +184,7 @@ describe('integration > base operations', function(){
         });
     });
 
+    /*
     it('05 - should fail to send a transaction with a invalid payload', function() {
       this.timeout(20000);
       var address = null;

@@ -21,14 +21,6 @@ module.exports = function(){
       type: String,
       required: false
     },
-    blockhash: {
-      type: String,
-      required: true
-    },
-    blocktime: {
-      type: Number,
-      required: true
-    },
     txid: {
       type: String,
       required: true

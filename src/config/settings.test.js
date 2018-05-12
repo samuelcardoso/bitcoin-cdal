@@ -8,5 +8,9 @@ module.exports = {
       minimumAddressPoolSize: 10,
       transactionNotificationAPI: 'http://localhost:3001/v1/transactions/notifications',
       daemonEndpoint: 'http://18.216.105.158:20264/json_rpc',
+    },
+
+    daemonSettings: {
+      previousBlocksToCheck: 6
     }
 };

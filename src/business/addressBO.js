@@ -1,5 +1,5 @@
 var logger          = require('../config/logger');
-var Decimal         = require('decimal.js')
+var Decimal         = require('decimal.js');
 
 module.exports = function(dependencies) {
   var addressDAO = dependencies.addressDAO;
@@ -192,6 +192,77 @@ module.exports = function(dependencies) {
             } else {
               return addressDAO.disable(addresses.id);
             }
+          })
+          .then(resolve)
+          .catch(reject);
+      });
+    },
+
+    insertFunds: function(address, amount, balanceType) {
+      var self = this;
+
+      return new Promise(function(resolve, reject) {
+        var chain = mutexHelper.lock(address);
+        var unlock = null;
+
+        return chain
+          .then(function(r) {
+            unlock = r;
+            return self.getByAddress(null, address);
+          })
+          .then(function(r) {
+            if (balanceType === 1) {
+              logger.info('[AddressBO.insertFunds()] Depositing funds in the locked balance (address, amount)', address, amount);
+              r.balance.locked = new Decimal(r.balance.locked).plus(amount).toFixed(8);
+            } else {
+              logger.info('[AddressBO.insertFunds()] Depositing funds in the available balance (address, amount)', address, amount);
+              r.balance.available = new Decimal(r.balance.available).plus(amount).toFixed(8);
+            }
+
+            newAddress = modelParser.prepare(r);
+            newAddress.isEnabled = true;
+            newAddress.updatedAt = dateHelper.getNow();
+
+            logger.debug('[AddressBO.insertFunds()] New address balance', JSON.stringify(newAddress));
+            return addressDAO.update(newAddress);
+          })
+          .then(function(r) {
+            unlock();
+            return r;
+          })
+          .then(resolve)
+          .catch(reject);
+      });
+    },
+
+    checkHasFunds: function(address, amount, balanceType) {
+      var self = this;
+
+      return new Promise(function(resolve, reject) {
+        var chain = mutexHelper.lock(address);
+        var unlock = null;
+
+        return chain
+          .then(function(r) {
+            unlock = r;
+            return self.getByAddress(null, address);
+          })
+          .then(function(r) {
+            logger.info('[AddressBO.checkHasFunds()] Checking if the wallet has funds', JSON.stringify(r));
+            var referenceBalance = balanceType === 1 ?
+                                                   r.balance.locked :
+                                                   r.balance.available;
+            if (referenceBalance < amount) {
+              logger.info('[AddressBO.checkHasFunds()] The wallet has funds', JSON.stringify(r));
+              return false;
+            } else {
+              logger.info('[AddressBO.checkHasFunds()] The wallet do not have funds', JSON.stringify(r));
+              return true;
+            }
+          })
+          .then(function(r) {
+            unlock();
+            return r;
           })
           .then(resolve)
           .catch(reject);

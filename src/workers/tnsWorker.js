@@ -53,53 +53,46 @@ module.exports = function(dependencies) {
           .then(function(r) {
             logger.info('[TNSWorker] Returned unnotified transactions from database', JSON.stringify(r));
             transactions = r;
-
-            for (var i = 0; i < r.length; i++) {
-              logger.info('[TNSWorker] Checking if the address is listed to have balance updated', r[i].address);
-              if (addresses.indexOf(r[i].address) === -1) {
-                logger.info('[TNSWorker] The address is listed to have balance updated', r[i].address);
-                addresses.push(r[i].address);
-              }
-            }
-
-            var p = [];
-
-            logger.info('[TNSWorker] Updating the balance for the involved addresses', JSON.stringify(addresses));
-            for (var j = 0; j < addresses.length; j++) {
-              p.push(addressBO.updateBalance(addresses[j]));
-            }
-
-            logger.debug('[TNSWorker] Returning promises', p.length);
-            return Promise.all(p);
-          })
-          .then(function() {
             var p = [];
 
             logger.info('[TNSWorker] Sending the notifications about transactions');
 
             for (var i = 0; i < transactions.length; i++) {
               logger.info('[TNSWorker] Notifiyng about the transaction', transactions[i]);
-              p.push(requestHelper.postJSON(
-                transactionNotificationAPI,
-                [],
-                transactions[i],
-                []));
+              var notificationPromise = new Promise(function(resolve) {
+                requestHelper.postJSON(
+                  transactionNotificationAPI,
+                  [],
+                  transactions[i],
+                  [200])
+                  .then(function(){
+                    resolve({isError: false});
+                  })
+                  .catch(function(e) {
+                    resolve({isError: true, error: e});
+                  });
+              });
+              p.push(notificationPromise);
             }
 
             return Promise.all(p);
           })
-          .then(function() {
+          .then(function(r) {
             var p = [];
 
             logger.info('[TNSWorker] Updating the flag is notified for the transactions', transactions.length);
 
             for (var i = 0; i < transactions.length; i++) {
-              if (!transactions[i].notifications.creation.isNotified) {
-                logger.info('[TNSWorker] Updating the flag notifications.confirmation.isNotified for the transaction', transactions[i].id);
-                p.push(transactionBO.updateIsCreationNotifiedFlag(transactions[i].id));
+              if (!r[i].isError) {
+                if (!transactions[i].notifications.creation.isNotified) {
+                  logger.info('[TNSWorker] Updating the flag notifications.confirmation.isNotified for the transaction', transactions[i].id);
+                  p.push(transactionBO.updateIsCreationNotifiedFlag(transactions[i].id));
+                } else {
+                  logger.info('[TNSWorker] Updating the flag notifications.confirmation.isNotified for the transaction', transactions[i].id);
+                  p.push(transactionBO.updateIsConfirmationNotifiedFlag(transactions[i].id));
+                }
               } else {
-                logger.info('[TNSWorker] Updating the flag notifications.confirmation.isNotified for the transaction', transactions[i].id);
-                p.push(transactionBO.updateIsConfirmationNotifiedFlag(transactions[i].id));
+                logger.info('[TNSWorker] The notification has failed to ', transactionNotificationAPI, transactions[i].id, r[i].error);
               }
             }
 

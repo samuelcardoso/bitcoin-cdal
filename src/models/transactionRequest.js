@@ -25,6 +25,14 @@ module.exports = function(){
       type: String,
       required: true
     },
+    amount: {
+      type: Number,
+      required: true
+    },
+    status: {
+      type: Number,
+      required: false
+    },
     fee: {
       type: Number,
       required: false

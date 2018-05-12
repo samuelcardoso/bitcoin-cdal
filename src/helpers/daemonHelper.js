@@ -15,9 +15,8 @@ module.exports = function(dependencies) {
             r.forEach(function(item) {
               addresses.push(item.address);
             });
-
+            addresses.sort();
             return addresses;
-            return mapAddresses(r);
           })
           .then(resolve)
           .catch(reject);
@@ -44,6 +43,21 @@ module.exports = function(dependencies) {
       return client.listSinceBlock(blockash);
     },
 
+    estimateSmartFee: function(blocks) {
+      return new Promise(function(resolve, reject) {
+        return client.estimateSmartFee(blocks || 6)
+          .then(function(r) {
+            if (!isNaN(r)) {
+              return r;
+            } else {
+              return 0;
+            }
+          })
+          .then(resolve)
+          .catch(reject);
+      });
+    },
+
     getTransactions: function(firstBlockIndex, blockCount, addresses, paymentId) {
       return this._main('getTransactions', {
         firstBlockIndex: firstBlockIndex,
@@ -58,7 +72,7 @@ module.exports = function(dependencies) {
     },
 
     sendTransaction: function(address, amount, comment, toComment) {
-      return cliente.sendToAddress(address, amount, comment, toComment);
+      return client.sendToAddress(address, amount, comment, toComment);
     },
 
     _throwDaemonError: function(r) {

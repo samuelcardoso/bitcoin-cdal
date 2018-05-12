@@ -1,9 +1,9 @@
 var Promise         = require('promise');
+var settings        = require('../config/settings');
 var logger          = require('../config/logger');
 
 module.exports = function(dependencies) {
   var transactionBO = dependencies.transactionBO;
-  var configurationBO = dependencies.configurationBO;
   var daemonHelper = dependencies.daemonHelper;
 
   return {
@@ -36,7 +36,7 @@ module.exports = function(dependencies) {
 
       for (var i = 0; i < r.transactions.length; i++) {
         if (r.transactions[i].category === 'send' || r.transactions[i].category === 'receive' ) {
-          logger.info('[BOSWorker] Parsing the transaction', JSON.stringify(r.transactions[i]));
+          logger.info('[BOSWorker] Parsing the transaction', r.transactions[i].txid, JSON.stringify(r.transactions[i]));
 
           var pTransaction = new Promise(function(resolve) {
             transactionBO.parseTransaction(r.transactions[i])
@@ -44,6 +44,8 @@ module.exports = function(dependencies) {
               .catch(resolve);
           });
           p.push(pTransaction);
+        } else {
+          logger.info('[BOSWorker] Ignoring the transaction', r.transactions[i].txid, JSON.stringify(r.transactions[i]));
         }
       }
 
@@ -78,26 +80,18 @@ module.exports = function(dependencies) {
     synchronizeToBlockchain: function() {
       var self = this;
       var chain = Promise.resolve();
-      var minimumConfirmations = 0;
 
       return new Promise(function(resolve) {
         logger.info('[BOSWorker] Starting Blockchain Observer Service');
 
         return chain
           .then(function() {
-            logger.info('[BOSWorker] Getting the minimumConfirmations key');
-            return configurationBO.getByKey('minimumConfirmations');
-          })
-          .then(function(r) {
-            logger.info('[BOSWorker] The minimumConfirmations is', JSON.stringify(r));
-            minimumConfirmations = parseInt(r.value);
-
             logger.info('[BOSWorker] Getting the block count from daemon');
             return daemonHelper.getBlockCount();
           })
           .then(function(r) {
             logger.info('[BOSWorker] The current blockcount is', r);
-            r -= minimumConfirmations;
+            r -= settings.daemonSettings.previousBlocksToCheck;
 
             if (r < 0) {
               r = 0;

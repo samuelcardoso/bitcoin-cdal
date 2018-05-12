@@ -1,7 +1,6 @@
 var logger              = require('winston');
 var model               = require('../models/transactionRequest')();
 var Promise             = require('promise');
-var $                   = require('mongo-dot-notation');
 
 module.exports = function() {
   var projectionCommonFields = {
@@ -85,7 +84,7 @@ module.exports = function() {
       return new Promise(function(resolve, reject) {
         logger.info('[TransactionRequestDAO] Update a transaction request', JSON.stringify(entity));
 
-        model.findByIdAndUpdate(entity._id, $.flatten(entity), {'new': true, fields: projectionCommonFields})
+        model.findByIdAndUpdate(entity._id, entity, {'new': true, fields: projectionCommonFields})
         .then(function(item) {
           logger.info('[TransactionRequestDAO] The transaction request has been updated succesfully');
           logger.debug(JSON.stringify(item.toObject()));
