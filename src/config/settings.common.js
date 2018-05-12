@@ -22,10 +22,10 @@ module.exports = {
     },
 
     daemonSettings: {
-      host: 'daemons.kernelits.net',
-      port:'10464',
-      username: 'rpc',
-      password: 'MwiW0_d46_odBTzhTtUuaJGR4SHDvTOaaClph7737ec=',
+      host: process.env.DAEMON_RPC_ADDRESS || 'daemons.kernelits.net',
+      port: process.env.DAEMON_RPC_PORT || '10464',
+      username: process.env.DAEMON_RPC_USERNAME || 'rpc',
+      password: process.env.DAEMON_RPC_PASSWORD || 'MwiW0_d46_odBTzhTtUuaJGR4SHDvTOaaClph7737ec=',
       previousBlocksToCheck: 1000
     }
   };
