@@ -38,15 +38,10 @@ chown -R redis.redis /data/redis
 # create directory log for supervisord
 [ ! -d /var/log/supervisord ] && mkdir /var/log/supervisord
 
-# create new password for supervisor
-SUPERVISOR_PASSWORD=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c32)
-
 # create default configuration for supervisord
 cat <<EOF >> $SUPERVISORD_CONF
 [unix_http_server]
 file=/tmp/supervisor.sock
-username=supervisor
-password=$SUPERVISOR_PASSWORD
 
 [supervisord]
 logfile=/var/log/supervisord/supervisord.log
@@ -64,8 +59,6 @@ supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 
 [supervisorctl]
 serverurl=unix:///tmp/supervisor.sock
-username=supervisor
-password=$SUPERVISOR_PASSWORD
 
 [eventlistener:dependentstartup]
 command=/usr/bin/supervisord-dependent-startup
