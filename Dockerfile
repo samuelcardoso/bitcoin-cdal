@@ -14,7 +14,7 @@ COPY src /app/src
 
 RUN mkdir -p /app/log \
  && echo http://dl-4.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories \
- && apk add --no-cache mongodb mongodb-tools make gcc g++ git python py-pip \
+ && apk add --no-cache mongodb mongodb-tools make gcc g++ git python redis py-pip \
  && pip install supervisor \
  && pip install git+https://github.com/bendikro/supervisord-dependent-startup.git@v1.1.0 \
  && cd /app \
