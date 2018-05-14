@@ -106,7 +106,7 @@ EOF
 
 # start supervisord
 if [ -z "$1" ]; then
-  /usr/bin/supervisord --configuration $SUPERVISORD_CONF
+  /usr/bin/supervisord --nodaemon --configuration $SUPERVISORD_CONF
 fi
 
 exec "$@"
