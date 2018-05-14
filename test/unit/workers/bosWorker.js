@@ -38,7 +38,7 @@ describe('Workers > BOSWorker', function() {
 
     var getBlockHashStub = sinon.stub(daemonHelper, 'getBlockHash');
     getBlockHashStub
-      .withArgs(7)
+      .withArgs(4)
       .returns(Promise.resolve('127e38ed8be22414326fe6465d54025b89047fc676324efe51c27e99b963973b'));
 
     var transactions = [{

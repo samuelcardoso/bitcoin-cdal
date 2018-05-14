@@ -178,7 +178,7 @@ describe('Business > TransactionBO > ', function() {
 
       var withdrawStub = sinon.stub(addressBO, 'withdraw');
       withdrawStub
-        .withArgs('addressFrom', 1.000197, 1)
+        .withArgs('addressFrom', new Decimal(1.000197).toFixed(8), 0)
         .returns(Promise.resolve());
 
       var getByAddressStub = sinon.stub(addressBO, 'getByAddress');
@@ -229,7 +229,7 @@ describe('Business > TransactionBO > ', function() {
           expect(getTransactionStub.callCount).to.be.equal(1);
           expect(withdrawStub.callCount).to.be.equal(1);
           expect(getByAddressStub.callCount).to.be.equal(1);
-          expect(depositStub.callCount).to.be.equal(1);
+          expect(depositStub.callCount).to.be.equal(2);
 
           estimateSmartFeeStub.restore();
           checkHasFundsStub.restore();

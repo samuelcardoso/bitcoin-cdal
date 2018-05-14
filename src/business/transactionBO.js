@@ -247,7 +247,7 @@ module.exports = function(dependencies) {
           })
           .then(function(){
             unlock();
-            return transactionRequest;
+            return modelParser.clear(transactionRequest);
           })
           .then(resolve)
           .catch(reject);

@@ -1,4 +1,5 @@
 var logger          = require('../config/logger');
+var settings        = require('../config/settings');
 var Decimal         = require('decimal.js');
 
 module.exports = function(dependencies) {
@@ -201,6 +202,10 @@ module.exports = function(dependencies) {
     insertFunds: function(address, amount, balanceType) {
       var self = this;
 
+      if (settings.daemonSettings.useMainAddressBalance && settings.daemonSettings.mainAddress) {
+        address = settings.daemonSettings.mainAddress;
+      }
+
       return new Promise(function(resolve, reject) {
         var chain = mutexHelper.lock(address);
         var unlock = null;
@@ -238,6 +243,10 @@ module.exports = function(dependencies) {
     checkHasFunds: function(address, amount, balanceType) {
       var self = this;
 
+      if (settings.daemonSettings.useMainAddressBalance && settings.daemonSettings.mainAddress) {
+        address = settings.daemonSettings.mainAddress;
+      }
+
       return new Promise(function(resolve, reject) {
         var chain = mutexHelper.lock(address);
         var unlock = null;
@@ -271,6 +280,10 @@ module.exports = function(dependencies) {
 
     withdraw: function(address, amount, balanceType) {
       var self = this;
+
+      if (settings.daemonSettings.useMainAddressBalance && settings.daemonSettings.mainAddress) {
+        address = settings.daemonSettings.mainAddress;
+      }
 
       return new Promise(function(resolve, reject) {
         var chain = mutexHelper.lock(address);
@@ -320,6 +333,10 @@ module.exports = function(dependencies) {
 
     deposit: function(address, amount, balanceType) {
       var self = this;
+
+      if (settings.daemonSettings.useMainAddressBalance && settings.daemonSettings.mainAddress) {
+        address = settings.daemonSettings.mainAddress;
+      }
 
       return new Promise(function(resolve, reject) {
         var chain = mutexHelper.lock(address);

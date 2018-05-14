@@ -1,9 +1,7 @@
 var BOFactory             = require('../../src/business/boFactory');
 var WorkerFactory         = require('../../src/workers/workerFactory');
 var HelperFactory         = require('../../src/helpers/helperFactory');
-var settings              = require('../../src/config/settings');
 var Starter               = require('../../src/starter.js');
-var settings              = require('../../src/config/settings.js');
 var request               = require('supertest');
 var chai                  = require('chai');
 var expect                = chai.expect;
@@ -52,7 +50,7 @@ describe('integration > base operations', function(){
   });
 
   after(function(){
-    //return clearDatabase();
+    return clearDatabase();
   });
 
   it('01 - should sinchronize existing addresses from daemon and maintain the pool', function() {
@@ -95,15 +93,9 @@ describe('integration > base operations', function(){
       });
     });
 
-    it('03 - should synchronize from block 0', function() {
-      this.timeout(5000000);
-      return bosWorker.synchronizeFromBlock(46880);
-    });
-
 
     it('04 - should create a transaction and update the addresses balance', function() {
       this.timeout(20000);
-      var address = null;
       var secondAddress = null;
       var transactionHash = null;
 

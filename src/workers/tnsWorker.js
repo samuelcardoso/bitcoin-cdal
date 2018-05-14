@@ -3,7 +3,6 @@ var logger          = require('../config/logger');
 
 module.exports = function(dependencies) {
   var transactionBO = dependencies.transactionBO;
-  var addressBO = dependencies.addressBO;
   var requestHelper = dependencies.requestHelper;
   var configurationBO = dependencies.configurationBO;
 
@@ -33,7 +32,6 @@ module.exports = function(dependencies) {
 
     notifyConfirmedTransactions: function() {
       var chain = Promise.resolve();
-      var addresses = [];
       var transactions = null;
       var transactionNotificationAPI = null;
 
