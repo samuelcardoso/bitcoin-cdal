@@ -9,15 +9,12 @@ MONGODB_CONF=/etc/mongod.conf
 # file configuration of redis
 REDIS_CONF=/etc/redis.conf
 
-# create base directory of data
-[ ! -d /data ] && mkdir /data
-
 # create base directory of mongodb
-[ ! -d /data/mongo/configdb ] && mkdir /data/mongo/configdb
-[ ! -d /data/mongo/db ] && mkdir /data/mongo/db
+[ ! -d /data/mongo/configdb ] && mkdir -p /data/mongo/configdb
+[ ! -d /data/mongo/db ] && mkdir -p /data/mongo/db
 
 # create base directory of redis
-[ ! -d /data/redis ] && mkdir /data/redis
+[ ! -d /data/redis ] && mkdir -p /data/redis
 
 # create base config file of mongodb
 echo "# mongod.conf" > $MONGODB_CONF
