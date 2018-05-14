@@ -36,7 +36,7 @@ chown -R mongodb.mongodb /data/mongo
 chown -R redis.redis /data/redis
 
 # create directory log for supervisord
-mkdir /var/log/supervisord
+[ ! -d /var/log/supervisord ] && mkdir /var/log/supervisord
 
 # create new password for supervisor
 SUPERVISOR_PASSWORD=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c32)
