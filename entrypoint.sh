@@ -1,4 +1,4 @@
-#!/bin/sh -em
+#!/bin/sh
 
 # file configuration of supervisord
 SUPERVISORD_CONF=/etc/supervisord.conf
@@ -6,25 +6,37 @@ SUPERVISORD_CONF=/etc/supervisord.conf
 # file configuration of mongodb
 MONGODB_CONF=/etc/mongod.conf
 
+# file configuration of redis
+REDIS_CONF=/etc/redis.conf
+
 # create base directory of mongodb
-[ ! -d /data ] && mkdir /data
-[ ! -d /data/configdb ] && mkdir /data/configdb
-[ ! -d /data/db ] && mkdir /data/db
+[ ! -d /data/mongo/configdb ] && mkdir -p /data/mongo/configdb
+[ ! -d /data/mongo/db ] && mkdir -p /data/mongo/db
+
+# create base directory of redis
+[ ! -d /data/redis ] && mkdir -p /data/redis
 
 # create base config file of mongodb
-if [ ! -f $MONGODB_CONF ]; then
-  echo "# mongod.conf" > $MONGODB_CONF
-  echo "dbpath=/data/db" >> $MONGODB_CONF
-  echo "logpath=/data/mongod.log" >> $MONGODB_CONF
-  echo "logappend=true" >> $MONGODB_CONF
-  echo "bind_ip=127.0.0.1" >> $MONGODB_CONF
-fi
+echo "# mongod.conf" > $MONGODB_CONF
+echo "dbpath=/data/mongo/db" >> $MONGODB_CONF
+echo "logpath=/data/mongo/mongod.log" >> $MONGODB_CONF
+echo "logappend=true" >> $MONGODB_CONF
+echo "bind_ip=127.0.0.1" >> $MONGODB_CONF
+
+# create base config file of redis
+echo "# redis.conf" > $REDIS_CONF
+echo "bind 127.0.0.1" >> $REDIS_CONF
+echo "dir /data/redis" >> $REDIS_CONF
+echo "save 900 1" >> $REDIS_CONF
+echo "save 300 10" >> $REDIS_CONF
+echo "save 60 10000" >> $REDIS_CONF
 
 # define owner of data
-chown -R mongodb.mongodb /data
+chown -R mongodb.mongodb /data/mongo
+chown -R redis.redis /data/redis
 
 # create directory log for supervisord
-mkdir /var/log/supervisord
+[ ! -d /var/log/supervisord ] && mkdir /var/log/supervisord
 
 # create default configuration for supervisord
 cat <<EOF >> $SUPERVISORD_CONF
@@ -53,13 +65,24 @@ command=/usr/bin/supervisord-dependent-startup
 autostart=true
 events=PROCESS_STATE
 
-[program:mongod]
+[program:mongo]
 command=/usr/bin/mongod --config /etc/mongod.conf
 user=mongodb
-directory=/data
+directory=/data/mongo
 autostart=false
 autorestart=true
 startsecs=10
+dependent_startup=true
+
+[program:redis]
+command=/usr/bin/redis-server /etc/redis.conf
+user=redis
+directory=/data/redis
+autostart=false
+autorestart=true
+startsecs=10
+stderr_logfile=/var/log/redis/errors.log
+stdout_logfile=/var/log/redis/redis.log
 dependent_startup=true
 
 [program:node]
@@ -71,13 +94,12 @@ startretries=20
 stderr_logfile=/app/log/errors.log
 stdout_logfile=/app/log/output.log
 dependent_startup=true
-dependent_startup_wait_for=mongod:running
+dependent_startup_wait_for=mongo:running redis:running
 EOF
 
 # start supervisord
-if [ ! -z "$1" ]; then
-  /usr/bin/supervisord --configuration $SUPERVISORD_CONF
-  exec "$@"
-else
+if [ -z "$1" ]; then
   /usr/bin/supervisord --nodaemon --configuration $SUPERVISORD_CONF
 fi
+
+exec "$@"

@@ -1,8 +1,8 @@
 TAG ?= dev
 VERSION ?= master
 NAMESPACE ?= gleissonassis
-IMAGE ?= cryptonote-cdal
-CONTAINER ?= cryptonote-cdal
+IMAGE ?= bitcoin-cdal
+CONTAINER ?= bitcoin-cdal
 
 .PHONY: build push shell run start stop rm release 
 
