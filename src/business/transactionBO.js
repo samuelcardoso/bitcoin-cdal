@@ -172,6 +172,7 @@ module.exports = function(dependencies) {
           })
           .then(function(r) {
             logger.info('[TransactionBO.save()] Estimated fee', r);
+            logger.debug('[TransactionBO.save()] Calculating amout to check (r * 1.1) + entity.amount', r, entity.amount, JSON.stringify(entity));
             var amountToCheck = new Decimal(r).times(1.1).plus(entity.amount).toFixed(8);
             return addressBO.checkHasFunds(entity.from, amountToCheck, 0);
           })
@@ -250,7 +251,10 @@ module.exports = function(dependencies) {
             return modelParser.clear(transactionRequest);
           })
           .then(resolve)
-          .catch(reject);
+          .catch(function(e) {
+            unlock();
+            reject(e);
+          });
       });
     },
 

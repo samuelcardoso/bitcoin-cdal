@@ -7,6 +7,7 @@
     "test": "test"
   },
   "scripts": {
+    "LTC-GOOGLE": "DB_NAME=ltc-cdal PORT=50001 DAEMON_ADDRESS=35.231.95.227 DAEMON_PORT=8330 DAEMON_RPC_USER=litecoin DAEMON_RPC_PASSWORD=litecoin2020 DAEMON_MAIN_ADDRESS=LUg4xyxbFaMrjgkEd7wEGGqbZCrbB54nkA node src/server.js",
     "start": "node src/server.js",
     "test": "NODE_ENV=test istanbul cover --reporter=html ./node_modules/mocha/bin/_mocha -- -R spec --recursive"
   },
