@@ -21,8 +21,8 @@ module.exports = {
     },
 
     daemonSettings: {
-      host: process.env.DAEMON_ADDRESS || 'daemons.kernelits.net',
-      port: process.env.DAEMON_PORT || '10464',
+      host: process.env.DAEMON_RPC_ADDRESS || 'daemons.kernelits.net',
+      port: process.env.DAEMON_RPC_PORT || '10464',
       username: process.env.DAEMON_RPC_USER || 'rpc',
       password: process.env.DAEMON_RPC_PASSWORD || 'MwiW0_d46_odBTzhTtUuaJGR4SHDvTOaaClph7737ec=',
       previousBlocksToCheck: 1000,
