@@ -7,17 +7,18 @@ module.exports = {
     servicePort : process.env.PORT || 4000,
     isMongoDebug : true,
     jwt: {
-      secret: 'SECRET_DEV',
+      secret: process.env.JWT_SECRET || 'SECRET_DEV',
       expiresIn: '1h'
     },
 
     defaultSettings: {
       minimumConfirmations: 6,
       minimumAddressPoolSize: 100,
-      transactionNotificationAPI: util.format('http://%s/v1/transactions/notifications', process.env.NOTIFICATION_ADDRESS || 'localhost:3001')
+      transactionNotificationAPI: process.env.NOTIFICATION_API_ADDRESS || 'http://localhost:3000/v1/transactions/notifications'
     },
 
     mutex: {
+      host: process.ENV.REDIS_DB_SERVER || 'localhost'
     },
 
     daemonSettings: {
