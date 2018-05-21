@@ -18,7 +18,7 @@ module.exports = {
     },
 
     mutex: {
-      host: process.ENV.REDIS_DB_SERVER || 'localhost'
+      host: process.env.REDIS_DB_SERVER || 'localhost'
     },
 
     daemonSettings: {

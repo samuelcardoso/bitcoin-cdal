@@ -14,7 +14,7 @@ try {
   commonSettings = require('./settings.common');
   logger.info('Common settings file read successfully');
 } catch (e) {
-  logger.error('There is no common settings file to read');
+  logger.error('There is no common settings file to read', e);
 }
 
 try {
