@@ -35,7 +35,7 @@ module.exports = function(dependencies) {
       logger.info('[BOSWorker] Total of blockchain transactions', r.transactions.length);
 
       for (var i = 0; i < r.transactions.length; i++) {
-        if (r.transactions[i].trusted) {
+        if (!(r.transactions[i].trusted === false)) {
           if (r.transactions[i].category === 'send' || r.transactions[i].category === 'receive' ) {
             logger.info('[BOSWorker] Parsing the transaction', r.transactions[i].txid, JSON.stringify(r.transactions[i]));
 
