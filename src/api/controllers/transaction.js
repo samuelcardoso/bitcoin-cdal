@@ -96,9 +96,9 @@ module.exports = function() {
         .catch(rh.error);
     },
 
-    getBlockchainTransaction: function(req, res) {
+    getBlockchainTransactions: function(req, res) {
       var rh = new HTTPResponseHelper(req, res);
-      business.getBlockchainTransactionByTransactionHash(req.params.transactionHash)
+      business.getBlockchainTransactionsByTransactionHash(req.params.transactionHash)
         .then(rh.ok)
         .catch(rh.error);
     },

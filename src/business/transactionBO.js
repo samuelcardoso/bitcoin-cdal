@@ -280,6 +280,28 @@ module.exports = function(dependencies) {
       });
     },
 
+    getBlockchainTransactionsByTransaction: function(txid) {
+      return new Promise(function(resolve, reject) {
+        var filter = {
+          txid: txid
+        };
+
+        blockchainTransactionDAO.getAll(filter)
+          .then(resolve)
+          .catch(reject);
+      });
+    },
+
+    getBlockchainTransactions: function() {
+      return new Promise(function(resolve, reject) {
+        var filter = {};
+
+        blockchainTransactionDAO.getAll(filter)
+          .then(resolve)
+          .catch(reject);
+      });
+    },
+
     updateBlockchainTransaction: function(transaction, blockchainTransaction) {
       var self = this;
 
