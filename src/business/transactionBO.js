@@ -214,7 +214,6 @@ module.exports = function(dependencies) {
             return transactionRequestDAO.update(transactionRequest);
           })
           .then(function(){
-            console.log('BBBBBB', transactionRequest);
             logger.info('[TransactionBO] Getting transaction information by transactionHash', transactionRequest.transactionHash);
             return daemonHelper.getTransaction(transactionRequest.transactionHash);
           })
@@ -253,6 +252,7 @@ module.exports = function(dependencies) {
           .then(resolve)
           .catch(function(e) {
             unlock();
+            logger.error('[TransactionBO] An error has occurred whilte save transactions', JSON.stringify(e));
             reject(e);
           });
       });

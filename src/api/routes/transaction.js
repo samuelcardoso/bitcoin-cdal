@@ -2,7 +2,8 @@ module.exports = function(app) {
   var controller = app.controllers.transaction;
 
   app.route('/v1/transactions')
-    .get(controller.getAll);
+    .get(controller.getAll)
+    .post(controller.save);
 
   app.route('/v1/transactions/:transactionHash')
     .get(controller.getAll);
