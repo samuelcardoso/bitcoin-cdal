@@ -280,7 +280,7 @@ module.exports = function(dependencies) {
       });
     },
 
-    getBlockchainTransactionsByTransaction: function(txid) {
+    getBlockchainTransactionsByTXID: function(txid) {
       return new Promise(function(resolve, reject) {
         var filter = {
           txid: txid

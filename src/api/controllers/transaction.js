@@ -98,7 +98,14 @@ module.exports = function() {
 
     getBlockchainTransactions: function(req, res) {
       var rh = new HTTPResponseHelper(req, res);
-      business.getBlockchainTransactionsByTransactionHash(req.params.transactionHash)
+      business.getBlockchainTransactions()
+        .then(rh.ok)
+        .catch(rh.error);
+    },
+
+    getBlockchainTransactionsByTXID: function(req, res) {
+      var rh = new HTTPResponseHelper(req, res);
+      business.getBlockchainTransactionsByTXID(req.params.transactionHash)
         .then(rh.ok)
         .catch(rh.error);
     },

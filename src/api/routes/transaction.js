@@ -8,7 +8,7 @@ module.exports = function(app) {
     .get(controller.getAll);
 
   app.route('/v1/blockchain-transactions/:transactionHash')
-    .get(controller.getBlockchainTransactionsByTransaction);
+    .get(controller.getBlockchainTransactionsByTXID);
 
   app.route('/v1/blockchain-transactions')
   .get(controller.getBlockchainTransactions);
