@@ -13,11 +13,7 @@ module.exports = function(dependencies) {
             var addresses = [];
 
             r.forEach(function(item) {
-              if (item.address && item.address.startsWith('bitcoincash:')) {
-                addresses.push(item.address.split('bitcoincash:')[1]);
-              } else {
                 addresses.push(item.address);
-              }
             });
 
             addresses.sort();
@@ -29,14 +25,7 @@ module.exports = function(dependencies) {
     },
 
     createAddress: function() {
-      return client.getNewAddress()
-        .then(function(r) {
-          if (r && r.startsWith('bitcoincash:')) {
-            return r.split('bitcoincash:')[1];
-          } else {
-            return r;
-          }
-        });
+      return client.getNewAddress();
     },
 
     getBalance: function() {

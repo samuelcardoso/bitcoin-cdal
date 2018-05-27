@@ -34,7 +34,7 @@ describe('business > DaemonHelper', function() {
       .then(function(r) {
         expect(r).to.deep.equal([
           '2NFD6QUYxkDMJV5wnXn2AehHDqMd31JdUMP',
-          '2NFGQunPE1chxuiMUjck8HF8bfyFzGZryne'
+          'bitcoincash:2NFGQunPE1chxuiMUjck8HF8bfyFzGZryne'
         ]);
       });
   });
