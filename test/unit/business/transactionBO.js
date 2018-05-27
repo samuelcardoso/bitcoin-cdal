@@ -244,6 +244,72 @@ describe('Business > TransactionBO > ', function() {
         });
     });
 
+    it('save not fail when sendTransaction fails', function() {
+      var now = new Date();
+      dateHelper.setNow(now);
+
+      var estimateSmartFeeStub = sinon.stub(daemonHelper, 'estimateSmartFee');
+      estimateSmartFeeStub
+        .withArgs()
+        .returns(Promise.resolve(new Decimal(0.1).toFixed(8)));
+
+      var checkHasFundsStub = sinon.stub(addressBO, 'checkHasFunds');
+      checkHasFundsStub
+        .withArgs('addressFrom', new Decimal(1.11).toFixed(8), 0)
+        .returns(Promise.resolve(true));
+
+      var transactionRequestSaveStub = sinon.stub(transactionRequestDAO, 'save');
+      transactionRequestSaveStub
+        .withArgs({
+          ownerId: 'ownerId',
+          ownerTransactionId: 'ownerTransactionId',
+          from: 'addressFrom',
+          to: 'addressTo',
+          amount: 1,
+          status: 0,
+          comment: 'comment',
+          commentTo: 'addressFrom@addressTo',
+          createdAt: now
+        })
+        .returns(Promise.resolve({
+          _id: 'ID',
+          ownerId: 'ownerId',
+          ownerTransactionId: 'ownerTransactionId',
+          from: 'addressFrom',
+          to: 'addressTo',
+          amount: 1,
+          status: 0,
+          comment: 'comment',
+          commentTo: 'addressFrom@addressTo',
+          createdAt: now
+        }));
+
+      var sendTransactionStub = sinon.stub(daemonHelper, 'sendTransaction');
+      sendTransactionStub
+        .withArgs(
+          'addressTo',
+          1,
+          'comment',
+          'addressFrom@addressTo'
+        )
+        .returns(Promise.reject({error: true}));
+
+      return transactionBO.save({
+        ownerId: 'ownerId',
+        ownerTransactionId: 'ownerTransactionId',
+        from: 'addressFrom',
+        to: 'addressTo',
+        amount: 1,
+        comment: 'comment'
+      })
+        .then(function(r){
+          throw r;
+        })
+        .catch(function(e) {
+          expect(e.error).to.be.true;
+        });
+    });
+
     it('parseTransaction - send transaction not found but with request', function() {
       var now = new Date();
       var getNowStub = sinon.stub(dateHelper, 'getNow');

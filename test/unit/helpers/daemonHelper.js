@@ -9,6 +9,7 @@ describe('business > DaemonHelper', function() {
   var daemonHelper = new DaemonHelper({
     client: client
   });
+
   it('should run the getAddresses method', function() {
     var clientListAddressGroupings = sinon.stub(client, 'listReceivedByAddress');
     clientListAddressGroupings
@@ -21,7 +22,7 @@ describe('business > DaemonHelper', function() {
         label: '',
         txids: []
       }, {
-        address: '2NFGQunPE1chxuiMUjck8HF8bfyFzGZryne',
+        address: 'bitcoincash:2NFGQunPE1chxuiMUjck8HF8bfyFzGZryne',
         account: '',
         amount: 0,
         confirmations: 0,

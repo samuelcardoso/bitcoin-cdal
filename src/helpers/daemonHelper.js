@@ -13,8 +13,13 @@ module.exports = function(dependencies) {
             var addresses = [];
 
             r.forEach(function(item) {
-              addresses.push(item.address);
+              if (item.address && item.address.startsWith('bitcoincash:')) {
+                addresses.push(item.address.split('bitcoincash:')[1]);
+              } else {
+                addresses.push(item.address);
+              }
             });
+
             addresses.sort();
             return addresses;
           })
