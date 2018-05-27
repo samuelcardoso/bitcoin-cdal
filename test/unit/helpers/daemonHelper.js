@@ -38,4 +38,24 @@ describe('business > DaemonHelper', function() {
         ]);
       });
   });
+
+  it('should not fail when sendTransaction method fails', function() {
+    var sendToAddressStub = sinon.stub(client, 'sendToAddress');
+    sendToAddressStub
+      .withArgs('address', 1, 'comment', 'toComment')
+      .returns(Promise.reject({
+        message:'Loading block index...',
+        code:-28,
+        name:'RpcError'
+      }));
+
+    return daemonHelper.sendTransaction('address', 1, 'comment', 'toComment')
+      .then(function(r) {
+        throw r;
+      })
+      .catch(function(e) {
+        expect(e.code).to.be.equal(-28);
+        sendToAddressStub.restore();
+      });
+  });
 });
