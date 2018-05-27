@@ -24,7 +24,14 @@ module.exports = function(dependencies) {
     },
 
     createAddress: function() {
-      return client.getNewAddress();
+      return client.getNewAddress()
+        .then(function(r) {
+          if (r && r.startsWith('bitcoincash:')) {
+            return r.split('bitcoincash:')[1];
+          } else {
+            return r;
+          }
+        });
     },
 
     getBalance: function() {
@@ -58,82 +65,12 @@ module.exports = function(dependencies) {
       });
     },
 
-    getTransactions: function(firstBlockIndex, blockCount, addresses, paymentId) {
-      return this._main('getTransactions', {
-        firstBlockIndex: firstBlockIndex,
-        blockCount: blockCount,
-        addresses: addresses,
-        paymentId: paymentId
-      });
-    },
-
     getTransaction: function(txid) {
       return client.getTransaction(txid);
     },
 
     sendTransaction: function(address, amount, comment, toComment) {
       return client.sendToAddress(address, amount, comment, toComment);
-    },
-
-    _throwDaemonError: function(r) {
-      switch (r.error.code) {
-        case -32601:
-          throw {
-            status: 500,
-            message: r.error.message,
-            details: r
-          };
-        case -32600:
-          throw {
-            status: 409,
-            code: 'INVALID_REQUEST',
-            message: r.error.message,
-            details: r
-          };
-        case -32000:
-          switch (r.error.data.application_code) {
-            case 4:
-              throw {
-                status: 404,
-                message: 'Requested object not found',
-                error: 'OBJECT_NOT_FOUND',
-                details: r
-              };
-            case 7:
-              throw {
-                status: 409,
-                message: 'Bad address',
-                error: 'ERROR_TRANSACTION_BAD_ADDRESS',
-                details: r
-              };
-            case 9:
-              throw {
-                status: 409,
-                message: 'Wrong amount',
-                error: 'ERROR_TRANSACTION_WRONG_AMOUNT',
-                details: r
-              };
-            case 17:
-              throw {
-                status: 409,
-                message: 'Transaction fee is too small',
-                error: 'ERROR_TRANSACTION_SMALL_FEE',
-                details: r
-              };
-            default:
-              throw {
-                status: 409,
-                message: 'An error has occurred while processing this transaction. ' + r.error.message,
-                details: r
-              };
-          }
-        default:
-          throw {
-            status: 500,
-            message: 'An expected error has occurred while processing',
-            details: r
-          };
-      }
     }
   };
 };

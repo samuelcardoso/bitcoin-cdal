@@ -252,7 +252,7 @@ module.exports = function(dependencies) {
           .then(resolve)
           .catch(function(e) {
             unlock();
-            logger.error('[TransactionBO] An error has occurred whilte save transactions', JSON.stringify(e));
+            logger.error('[TransactionBO] An error has occurred while save transactions', JSON.stringify(e));
             reject(e);
           });
       });
