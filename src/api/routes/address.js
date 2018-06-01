@@ -11,7 +11,13 @@ module.exports = function(app) {
   app.route('/v1/addresses/:address')
     .get(controller.getByAddress);
 
+  app.route('/v1/addresses/:address/balance')
+    .get(controller.getAddressBalance);
+
   app.route('/v1/:ownerId/addresses/:address')
     .get(controller.getByAddress)
     .put(controller.update);
+
+  app.route('/v1/:ownerId/addresses/:address/balance')
+    .get(controller.getAddressBalance);
 };

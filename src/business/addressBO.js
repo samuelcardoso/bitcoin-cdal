@@ -370,6 +370,19 @@ module.exports = function(dependencies) {
           .then(resolve)
           .catch(reject);
       });
-    }
+    },
+
+    getAddressBalance: function(address) {
+      var self = this;
+
+      return new Promise(function(resolve, reject) {
+        self.getByAddress(null, address)
+          .then(function(r) {
+            return r.balance;
+          })
+          .then(resolve)
+          .catch(reject);
+      });
+    },
   };
 };
