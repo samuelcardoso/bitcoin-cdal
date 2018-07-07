@@ -87,6 +87,7 @@ module.exports = function(dependencies) {
       var self = this;
       var chain = Promise.resolve();
       var currentBlockNumber = null;
+      var initialCurrentBlockNumber = null;
       var blockCount = null;
 
       return new Promise(function(resolve) {
@@ -99,6 +100,7 @@ module.exports = function(dependencies) {
           })
           .then(function(r) {
             currentBlockNumber = parseInt(r.value);
+            initialCurrentBlockNumber = currentBlockNumber;
             logger.debug('[BOSWorker.synchronizeToBlockchain()] Getting the block count from daemon');
             return daemonHelper.getBlockCount();
           })
@@ -115,11 +117,11 @@ module.exports = function(dependencies) {
             return self.synchronizeFromBlock(currentBlockNumber);
           })
           .then(function() {
+            currentBlockNumber = initialCurrentBlockNumber + settings.daemonSettings.previousBlocksToCheck;
             logger.debug('[BOSWorker.synchronizeToBlockchain()] currentBlockNumber, blockCount, currentBlockNumber > blockCount',
                           currentBlockNumber,
                           blockCount,
                           currentBlockNumber > blockCount);
-            currentBlockNumber += settings.daemonSettings.previousBlocksToCheck;
 
             if (currentBlockNumber > blockCount) {
               currentBlockNumber = blockCount;
