@@ -49,7 +49,7 @@ module.exports = function() {
           return self.runWorkers();
         })
         .catch(function() {
-          logger.error("There was an error configuring the application");
+          logger.error('There was an error configuring the application');
         });
     }
   };

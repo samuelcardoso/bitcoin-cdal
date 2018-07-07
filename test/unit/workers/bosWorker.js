@@ -27,6 +27,17 @@ describe('Workers > BOSWorker', function() {
       key: 'minimumConfirmations',
       value: 3
     }));
+  getByKeyStub
+    .withArgs('currentBlockNumber')
+    .returns(Promise.resolve({
+      key: 'currentBlockNumber',
+      value: 0
+    }));
+
+  var updateStub = sinon.stub(configurationBO, 'update');
+  updateStub
+    .withArgs({key:'currentBlockNumber', value: 6})
+    .returns(Promise.resolve());
 
   it('should run', function() {
     var now = new Date();
@@ -38,7 +49,7 @@ describe('Workers > BOSWorker', function() {
 
     var getBlockHashStub = sinon.stub(daemonHelper, 'getBlockHash');
     getBlockHashStub
-      .withArgs(4)
+      .withArgs(0)
       .returns(Promise.resolve('127e38ed8be22414326fe6465d54025b89047fc676324efe51c27e99b963973b'));
 
     var transactions = [{
@@ -84,7 +95,7 @@ describe('Workers > BOSWorker', function() {
       .returns(Promise.resolve());
 
     parseTransactionStub
-      .withArgs(transactions[0])
+      .withArgs(transactions[1])
       .returns(Promise.resolve());
 
     return bosWorker.synchronizeToBlockchain()
@@ -110,7 +121,7 @@ describe('Workers > BOSWorker', function() {
 
     return bosWorker.synchronizeToBlockchain()
       .then(function(r) {
-        expect(r).to.be.true;
+        expect(r).to.be.false;
         expect(getBlockCountStub.callCount).to.be.equal(1);
 
         getBlockCountStub.restore();

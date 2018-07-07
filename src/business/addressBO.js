@@ -18,11 +18,11 @@ module.exports = function(dependencies) {
 
         chain
           .then(function() {
-            logger.info('[AddressBO] Clearing the database');
+            logger.debug('[AddressBO] Clearing the database');
             return addressDAO.clear();
           })
           .then(function() {
-            logger.info('[AddressBO] The database has been cleared');
+            logger.debug('[AddressBO] The database has been cleared');
           })
           .then(resolve)
           .catch(reject);
@@ -37,10 +37,10 @@ module.exports = function(dependencies) {
 
         filter.isEnabled = true;
 
-        logger.info('[AddressBO] Listing all addresses by filter ', JSON.stringify(filter));
+        logger.debug('[AddressBO.getAll()] Listing all addresses by filter ', filter);
         addressDAO.getAll(filter, {}, '+createdAt')
           .then(function(r) {
-            logger.info('[AddressBO] Total of addresses', r.length);
+            logger.debug('[AddressBO.getAll()] Total of addresses', r.length);
             return r.map(function(item) {
               return modelParser.clear(item);
             });
@@ -51,11 +51,24 @@ module.exports = function(dependencies) {
     },
 
     getFreeAddresses: function() {
-      logger.info('[AddressBO] Getting free addresses from database');
-      return this.getAll({
-        isEnabled: true,
-        ownerId: null
-      }, {}, '+createdAt');
+      var self = this;
+      return new Promise(function(resolve, reject) {
+        var chain = mutexHelper.lock('getFreeAddresses');
+        var unlock = null;
+
+        chain
+          .then(function(r) {
+            unlock = r;
+            logger.debug('[AddressBO] Getting free addresses from database');
+            return self.getAll({isEnabled: true, ownerId: null}, {}, '+createdAt');
+          })
+          .then(function(r) {
+            unlock();
+            return r;
+          })
+          .then(resolve)
+          .catch(reject);
+      });
     },
 
     createAddressFromDaemon: function(ownerId) {
@@ -65,11 +78,11 @@ module.exports = function(dependencies) {
       return new Promise(function(resolve, reject) {
         chain
           .then(function() {
-            logger.info('[AddressBO] Requesting to the daemon a new address');
+            logger.debug('[AddressBO] Requesting to the daemon a new address');
             return daemonHelper.createAddress();
           })
           .then(function(r) {
-            logger.info('[AddressBO] Saving the address and linking to ownerId', ownerId);
+            logger.debug('[AddressBO] Saving the address and linking to ownerId', ownerId);
             return self.registerAddressFromDaemon(ownerId, r);
           })
           .then(resolve)
@@ -94,11 +107,11 @@ module.exports = function(dependencies) {
               }
             };
 
-            logger.info('[AddressBO] Saving the address to the database', JSON.stringify(addressEntity));
+            logger.debug('[AddressBO] Saving the address to the database', JSON.stringify(addressEntity));
             return addressDAO.save(addressEntity);
           })
           .then(function(r) {
-            logger.info('[AddressBO] The address was stored at database successfully', JSON.stringify(r));
+            logger.debug('[AddressBO] The address was stored at database successfully', JSON.stringify(r));
             return modelParser.clear(r);
           })
           .then(resolve)
@@ -114,16 +127,16 @@ module.exports = function(dependencies) {
       return new Promise(function(resolve, reject) {
         return chain
           .then(function() {
-            logger.info('[AddressBO] Trying to get a free address from database');
+            logger.debug('[AddressBO] Trying to get a free address from database');
             return self.getFreeAddresses();
           })
           .then(function(r) {
             var address = r.length > 0 ? r[0] : null;
             if (!address) {
-              logger.info('[AddressBO] There is no free address at database');
+              logger.debug('[AddressBO] There is no free address at database');
               return self.createAddressFromDaemon(ownerId);
             } else {
-              logger.info('[AddressBO] A free address was found at database', JSON.stringify(address));
+              logger.debug('[AddressBO] A free address was found at database', JSON.stringify(address));
               return address;
             }
           })
@@ -133,12 +146,12 @@ module.exports = function(dependencies) {
             freeAddress.ownerId = ownerId;
             freeAddress.updatedAt = dateHelper.getNow();
 
-            logger.info('[AddressBO] Updating the free address to be owned by the ownerId ',
+            logger.debug('[AddressBO] Updating the free address to be owned by the ownerId ',
               JSON.stringify(freeAddress));
             return addressDAO.update(freeAddress);
           })
           .then(function(r) {
-            logger.info('[AddressBO] The address now is associated to the ownerId ', JSON.stringify(r));
+            logger.debug('[AddressBO] The address now is associated to the ownerId ', JSON.stringify(r));
             return modelParser.clear(r);
           })
           .then(resolve)
@@ -151,19 +164,19 @@ module.exports = function(dependencies) {
 
       return new Promise(function(resolve, reject) {
         var filter = {
-          address: address
+          address: {$regex : new RegExp(address, 'i')}
         };
 
         if (ownerId) {
           filter.ownerId = ownerId;
         }
 
-        logger.info('[AddressBO] Getting an address by ownerId/address', ownerId, address);
+        logger.debug('[AddressBO] Getting an address by ownerId/address', ownerId, address);
 
         self.getAll(filter)
           .then(function(addresses) {
             if (addresses.length) {
-              logger.info('[AddressBO] Address found by ownerId/address', JSON.stringify(addresses[0]));
+              logger.debug('[AddressBO] Address found by ownerId/address', JSON.stringify(addresses[0]));
               return addresses[0];
             } else {
               logger.warn('[AddressBO] There is no address to provided informations', ownerId, address);
@@ -179,7 +192,7 @@ module.exports = function(dependencies) {
       var self = this;
 
       return new Promise(function(resolve, reject) {
-        logger.info('[AddressBO] Disabling an address', ownerId, address);
+        logger.debug('[AddressBO] Disabling an address', ownerId, address);
 
         self.getByAddress(ownerId, address)
           .then(function(addresses) {
@@ -217,10 +230,10 @@ module.exports = function(dependencies) {
           })
           .then(function(r) {
             if (balanceType === 1) {
-              logger.info('[AddressBO.insertFunds()] Depositing funds in the locked balance (address, amount)', address, amount);
+              logger.debug('[AddressBO.insertFunds()] Depositing funds in the locked balance (address, amount)', address, amount);
               r.balance.locked = new Decimal(r.balance.locked).plus(amount).toFixed(8);
             } else {
-              logger.info('[AddressBO.insertFunds()] Depositing funds in the available balance (address, amount)', address, amount);
+              logger.debug('[AddressBO.insertFunds()] Depositing funds in the available balance (address, amount)', address, amount);
               r.balance.available = new Decimal(r.balance.available).plus(amount).toFixed(8);
             }
 
@@ -257,15 +270,15 @@ module.exports = function(dependencies) {
             return self.getByAddress(null, address);
           })
           .then(function(r) {
-            logger.info('[AddressBO.checkHasFunds()] Checking if the wallet has funds', JSON.stringify(r));
+            logger.debug('[AddressBO.checkHasFunds()] Checking if the wallet has funds', JSON.stringify(r));
             var referenceBalance = balanceType === 1 ?
                                                    r.balance.locked :
                                                    r.balance.available;
             if (referenceBalance < amount) {
-              logger.info('[AddressBO.checkHasFunds()] The wallet has funds', JSON.stringify(r));
+              logger.debug('[AddressBO.checkHasFunds()] The wallet has funds', JSON.stringify(r));
               return false;
             } else {
-              logger.info('[AddressBO.checkHasFunds()] The wallet do not have funds', JSON.stringify(r));
+              logger.debug('[AddressBO.checkHasFunds()] The wallet do not have funds', JSON.stringify(r));
               return true;
             }
           })
@@ -295,7 +308,7 @@ module.exports = function(dependencies) {
             return self.getByAddress(null, address);
           })
           .then(function(r) {
-            logger.info('[AddressBO.withdraw()] Checking if the wallet has funds', JSON.stringify(r));
+            logger.debug('[AddressBO.withdraw()] Checking if the wallet has funds', JSON.stringify(r));
             var referenceBalance = balanceType === 1 ?
                                                    r.balance.locked :
                                                    r.balance.available;
@@ -307,10 +320,10 @@ module.exports = function(dependencies) {
               };
             } else {
               if (balanceType === 1) {
-                logger.info('[AddressBO.withdraw()] Withdrawing funds in the locked balance (address, amount)', address, -amount);
+                logger.debug('[AddressBO.withdraw()] Withdrawing funds in the locked balance (address, amount)', address, -amount);
                 r.balance.locked = new Decimal(r.balance.locked).minus(amount).toFixed(8);
               } else {
-                logger.info('[AddressBO.withdraw()] Withdrawing funds in the available balance (address, amount)', address, -amount);
+                logger.debug('[AddressBO.withdraw()] Withdrawing funds in the available balance (address, amount)', address, -amount);
                 r.balance.available = new Decimal(r.balance.available).minus(amount).toFixed(8);
               }
 
@@ -349,10 +362,10 @@ module.exports = function(dependencies) {
           })
           .then(function(r) {
             if (balanceType === 1) {
-              logger.info('[AddressBO] Depositing funds in the locked balance (address, amount)', address, amount);
+              logger.debug('[AddressBO] Depositing funds in the locked balance (address, amount)', address, amount);
               r.balance.locked = new Decimal(r.balance.locked).plus(amount).toFixed(8);
             } else {
-              logger.info('[AddressBO] Depositing funds in the available balance (address, amount)', address, amount);
+              logger.debug('[AddressBO] Depositing funds in the available balance (address, amount)', address, amount);
               r.balance.available = new Decimal(r.balance.available).plus(amount).toFixed(8);
             }
 

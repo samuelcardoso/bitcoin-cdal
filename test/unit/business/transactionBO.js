@@ -320,7 +320,7 @@ describe('Business > TransactionBO > ', function() {
       var getAll = sinon.stub(blockchainTransactionDAO, 'getAll');
       getAll
         .withArgs({
-          txid: '028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2',
+          txid: {$regex : new RegExp('028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2', 'i')},
           category: 'send'
         })
         .returns(Promise.resolve([]));
@@ -480,7 +480,7 @@ describe('Business > TransactionBO > ', function() {
       var getAll = sinon.stub(blockchainTransactionDAO, 'getAll');
       getAll
         .withArgs({
-          txid: '028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2',
+          txid: {$regex : new RegExp('028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2', 'i')},
           category: 'receive'
         })
         .returns(Promise.resolve([]));
@@ -636,7 +636,7 @@ describe('Business > TransactionBO > ', function() {
       var getAll = sinon.stub(blockchainTransactionDAO, 'getAll');
       getAll
         .withArgs({
-          txid: '028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2',
+          txid: {$regex : new RegExp('028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2', 'i')},
           category: 'send'
         })
         .returns(Promise.resolve([]));
@@ -808,7 +808,7 @@ describe('Business > TransactionBO > ', function() {
       var getAll = sinon.stub(blockchainTransactionDAO, 'getAll');
       getAll
         .withArgs({
-          txid: '028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2',
+          txid: {$regex : new RegExp('028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2', 'i')},
           category: 'send'
         })
         .returns(Promise.resolve([]));
@@ -973,7 +973,7 @@ describe('Business > TransactionBO > ', function() {
       var getAll = sinon.stub(blockchainTransactionDAO, 'getAll');
       getAll
         .withArgs({
-          txid: '028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2',
+          txid: {$regex : new RegExp('028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2', 'i')},
           category: 'receive'
         })
         .returns(Promise.resolve([{
@@ -1090,7 +1090,7 @@ describe('Business > TransactionBO > ', function() {
       var getAll = sinon.stub(blockchainTransactionDAO, 'getAll');
       getAll
         .withArgs({
-          txid: '028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2',
+          txid: {$regex : new RegExp('028b3d59339b9fa8f8cb8ab9ec1e659ab168bb29663bced882c823db4657bfd2', 'i')},
           category: 'receive'
         })
         .returns(Promise.resolve([]));

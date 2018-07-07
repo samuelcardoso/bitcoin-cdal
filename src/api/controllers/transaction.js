@@ -29,11 +29,11 @@ module.exports = function() {
       }
 
       if (req.params.address) {
-        filter.address = req.params.address;
+        filter.address = {$regex : new RegExp(req.params.address, 'i')};
       }
 
       if (req.params.transactionHash) {
-        filter.transactionHash = req.params.transactionHash;
+        filter.transactionHash = {$regex : new RegExp(req.params.transactionHash, 'i')};
       }
 
       business.getAll(filter)
@@ -84,11 +84,11 @@ module.exports = function() {
       var filter = {};
 
       if (req.params.address) {
-        filter.address = req.params.address;
+        filter.address = {$regex : new RegExp(req.params.address, 'i')};
       }
 
       if (req.params.transactionHash) {
-        filter.txid = req.params.transactionHash;
+        filter.txid = {$regex : new RegExp(req.params.transactionHash, 'i')};
       }
 
       business.getBlockchainTransactionByTransaction(filter)

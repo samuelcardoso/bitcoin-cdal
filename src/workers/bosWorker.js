@@ -5,6 +5,7 @@ var logger          = require('../config/logger');
 module.exports = function(dependencies) {
   var transactionBO = dependencies.transactionBO;
   var daemonHelper = dependencies.daemonHelper;
+  var configurationBO = dependencies.configurationBO;
 
   return {
     dependencies: dependencies,
@@ -20,40 +21,41 @@ module.exports = function(dependencies) {
           .then(function() {
               self.isRunning = false;
 
-              logger.info('[BOSWorker] A new verification will occurr in 10s');
+              logger.debug('[BOSWorker.run()] A new verification will occurr in 10s');
               setTimeout(function() {
                 self.run();
               }, 10 * 1000);
           });
       } else {
-        logger.info('[BOSWorker] The process still running... this execution will be skiped');
+        logger.debug('[BOSWorker.run()] The process still running... this execution will be skiped');
       }
     },
 
     parseTransactionsFromDaemon: function(r) {
       var p = [];
-      logger.info('[BOSWorker] Total of blockchain transactions', r.transactions.length);
+      logger.debug('[BOSWorker.parseTransactionsFromDaemon()] Total of blockchain transactions', r.transactions.length);
 
       for (var i = 0; i < r.transactions.length; i++) {
         if (!(r.transactions[i].trusted === false)) {
           if (r.transactions[i].category === 'send' || r.transactions[i].category === 'receive' ) {
-            logger.info('[BOSWorker] Parsing the transaction', r.transactions[i].txid, JSON.stringify(r.transactions[i]));
+            logger.debug('[BOSWorker.parseTransactionsFromDaemon()] Parsing the transaction', r.transactions[i].txid, JSON.stringify(r.transactions[i]));
 
             var pTransaction = new Promise(function(resolve) {
-              transactionBO.parseTransaction(r.transactions[i])
+              var tmp = r.transactions[i];
+              transactionBO.parseTransaction(tmp)
                 .then(resolve)
                 .catch(resolve);
             });
             p.push(pTransaction);
           } else {
-            logger.info('[BOSWorker] Ignoring the transaction', r.transactions[i].txid, JSON.stringify(r.transactions[i]));
+            logger.debug('[BOSWorker.parseTransactionsFromDaemon()] Ignoring the transaction', r.transactions[i].txid, JSON.stringify(r.transactions[i]));
           }
         } else {
-          logger.info('[BOSWorker] The transaction is not trusted', r.transactions[i].txid, JSON.stringify(r.transactions[i]));
+          logger.debug('[BOSWorker.parseTransactionsFromDaemon()] The transaction is not trusted', r.transactions[i].txid, JSON.stringify(r.transactions[i]));
         }
       }
 
-      logger.debug('[BOSWorker] Returning promises', p.length);
+      logger.debug('[BOSWorker.parseTransactionsFromDaemon()] Returning promises', p.length);
       return Promise.all(p);
     },
 
@@ -65,15 +67,15 @@ module.exports = function(dependencies) {
 
         chain
           .then(function() {
-            logger.info('[BOSWorker] Getting the block hash linked to this block number', block);
+            logger.debug('[BOSWorker.synchronizeFromBlock()] Getting the block hash linked to this block number', block);
             return daemonHelper.getBlockHash(block);
           })
           .then(function(r) {
-            logger.info('[BOSWorker] Geeting transactions since block', r);
+            logger.debug('[BOSWorker.synchronizeFromBlock()] Geeting transactions since block', r);
             return daemonHelper.listSinceBlock(r);
           })
           .then(function(r) {
-            logger.info('[BOSWorker] Transactions from blockchain', r.transactions.length);
+            logger.debug('[BOSWorker.synchronizeFromBlock()] Transactions from blockchain', r.transactions.length);
             return self.parseTransactionsFromDaemon(r);
           })
           .then(resolve)
@@ -84,34 +86,58 @@ module.exports = function(dependencies) {
     synchronizeToBlockchain: function() {
       var self = this;
       var chain = Promise.resolve();
+      var currentBlockNumber = null;
+      var blockCount = null;
 
       return new Promise(function(resolve) {
-        logger.info('[BOSWorker] Starting Blockchain Observer Service');
+        logger.debug('[BOSWorker.synchronizeToBlockchain()] Starting Blockchain Observer Service');
 
         return chain
           .then(function() {
-            logger.info('[BOSWorker] Getting the block count from daemon');
+            logger.debug('[BOSWorker.synchronizeToBlockchain()] Getting current block number');
+            return configurationBO.getByKey('currentBlockNumber');
+          })
+          .then(function(r) {
+            currentBlockNumber = parseInt(r.value);
+            logger.debug('[BOSWorker.synchronizeToBlockchain()] Getting the block count from daemon');
             return daemonHelper.getBlockCount();
           })
           .then(function(r) {
-            logger.info('[BOSWorker] The current blockcount is', r);
-            r -= settings.daemonSettings.previousBlocksToCheck;
+            blockCount = r;
+            logger.debug('[BOSWorker.synchronizeToBlockchain()] The current block number is', currentBlockNumber);
+            logger.debug('[BOSWorker.synchronizeToBlockchain()] The current blockcount is', r);
+            currentBlockNumber -= settings.daemonSettings.previousBlocksToCheck;
 
-            if (r < 0) {
-              r = 0;
+            if (currentBlockNumber < 0) {
+              currentBlockNumber = 0;
             }
 
-            return self.synchronizeFromBlock(r);
+            return self.synchronizeFromBlock(currentBlockNumber);
           })
           .then(function() {
-            logger.info('[BOSWorker] Blockchain Observer Service has finished this execution');
+            logger.debug('[BOSWorker.synchronizeToBlockchain()] currentBlockNumber, blockCount, currentBlockNumber > blockCount',
+                          currentBlockNumber,
+                          blockCount,
+                          currentBlockNumber > blockCount);
+            currentBlockNumber += settings.daemonSettings.previousBlocksToCheck;
+
+            if (currentBlockNumber > blockCount) {
+              currentBlockNumber = blockCount;
+            }
+
+            logger.debug('[BOSWorker.synchronizeToBlockchain()] Updating currentBlockNumber to ', currentBlockNumber);
+
+            return configurationBO.update({key:'currentBlockNumber', value: currentBlockNumber});
+          })
+          .then(function() {
+            logger.debug('[BOSWorker.synchronizeToBlockchain()] Blockchain Observer Service has finished this execution');
             return true;
           })
           .then(resolve)
           .catch(function(r) {
-            logger.error('[BOSWorker] An error has occurred whiling synchronizing to daemon', JSON.stringify(r));
+            logger.error('[BOSWorker.synchronizeToBlockchain()] An error has occurred whiling synchronizing to daemon', r);
             //even if a error has occurred the process must continue
-            resolve(true);
+            resolve(false);
           });
       });
     }

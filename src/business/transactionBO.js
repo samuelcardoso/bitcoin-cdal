@@ -261,7 +261,7 @@ module.exports = function(dependencies) {
     getBlockchainTransactionByTXID: function(txid, category) {
       return new Promise(function(resolve, reject) {
         var filter = {
-          txid: txid,
+          txid: {$regex : new RegExp(txid, 'i')},
           category: category
         };
 
@@ -283,7 +283,7 @@ module.exports = function(dependencies) {
     getBlockchainTransactionsByTXID: function(txid) {
       return new Promise(function(resolve, reject) {
         var filter = {
-          txid: txid
+          txid: {$regex : new RegExp(txid, 'i')}
         };
 
         blockchainTransactionDAO.getAll(filter)
