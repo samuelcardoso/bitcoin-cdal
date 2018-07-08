@@ -399,6 +399,11 @@ module.exports = function(dependencies) {
                 status: 422,
                 error: 'MAIN_ADDRESS_IS_NOT_AVAILABLE'
               };
+            } else if (settings.daemonSettings.mainAddress !== address) {
+              throw {
+                status: 422,
+                error: 'IT_IS_NOT_MAIN_ADDRESS'
+              };
             } else {
               return daemonHelper.getBalance();
             }
