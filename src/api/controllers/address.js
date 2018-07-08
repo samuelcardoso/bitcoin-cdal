@@ -63,7 +63,8 @@ module.exports = function() {
     getAddressBalance: function(req, res) {
       var rh = new HTTPResponseHelper(req, res);
 
-      return business.getAddressBalance(req.params.address)
+      return business
+        .updateAddressBalance(req.params.address)
         .then(rh.ok)
         .catch(rh.error);
     }

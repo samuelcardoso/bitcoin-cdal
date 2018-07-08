@@ -7,7 +7,9 @@
     "test": "test"
   },
   "scripts": {
-    "LTC-DEV": "NOTIFICATION_API_ADDRESS=http://localhost:3001 REDIS_DB_SERVER=localhost DB_SERVER=localhost DB_NAME=ltc-dev-cdal PORT=50001 DAEMON_RPC_ADDRESS=40.76.70.122 DAEMON_RPC_PORT=8333 DAEMON_RPC_USER=ltc DAEMON_RPC_PASSWORD=ltc2020 DAEMON_MAIN_ADDRESS=mjtqDzMK4Sga1xLc57nmh91HVwLHoKidQY node src/server.js",
+    "BTC-DEV": "NOTIFICATION_API_ADDRESS=http://localhost:3001 REDIS_DB_SERVER=localhost DB_SERVER=localhost DB_NAME=btc-dev-cdal PORT=50001 DAEMON_RPC_ADDRESS=40.76.70.122 DAEMON_RPC_PORT=4100 DAEMON_RPC_USER=rpc DAEMON_RPC_PASSWORD=rpc DAEMON_MAIN_ADDRESS=mjtqDzMK4Sga1xLc57nmh91HVwLHoKidQY node src/server.js",
+    "LTC-DEV": "NOTIFICATION_API_ADDRESS=http://localhost:3001 REDIS_DB_SERVER=localhost DB_SERVER=localhost DB_NAME=ltc-dev-cdal PORT=50001 DAEMON_RPC_ADDRESS=40.76.70.122 DAEMON_RPC_PORT=4101 DAEMON_RPC_USER=ltc DAEMON_RPC_PASSWORD=ltc2020 DAEMON_MAIN_ADDRESS=mjtqDzMK4Sga1xLc57nmh91HVwLHoKidQY node src/server.js",
+    "BCH-DEV": "NOTIFICATION_API_ADDRESS=http://localhost:3001 REDIS_DB_SERVER=localhost DB_SERVER=localhost DB_NAME=bch-dev-cdal PORT=50001 DAEMON_RPC_ADDRESS=40.76.70.122 DAEMON_RPC_PORT=4102 DAEMON_RPC_USER=bch DAEMON_RPC_PASSWORD=bch2020 DAEMON_MAIN_ADDRESS=mjtqDzMK4Sga1xLc57nmh91HVwLHoKidQY node src/server.js",
     "start": "node src/server.js",
     "test": "NODE_ENV=test istanbul cover --reporter=html ./node_modules/mocha/bin/_mocha -- -R spec --recursive"
   },

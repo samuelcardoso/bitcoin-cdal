@@ -385,6 +385,45 @@ module.exports = function(dependencies) {
       });
     },
 
+    updateAddressBalance: function(address) {
+      var self = this;
+
+      return new Promise(function(resolve, reject) {
+        var chain = Promise.resolve();
+        var blockchainBalance = null;
+
+        chain
+          .then(function() {
+            if (!settings.daemonSettings.useMainAddressBalance || !settings.daemonSettings.mainAddress) {
+              throw {
+                status: 422,
+                error: 'MAIN_ADDRESS_IS_NOT_AVAILABLE'
+              };
+            } else {
+              return daemonHelper.getBalance();
+            }
+          })
+          .then(function(r) {
+            blockchainBalance = r;
+            return self.getByAddress(null, address);
+          })
+          .then(function(r) {
+            newAddress = modelParser.prepare(r);
+            newAddress.balance.available = blockchainBalance;
+            newAddress.balance.locked = 0;
+            newAddress.updatedAt = dateHelper.getNow();
+
+            logger.debug('[AddressBO] New address balance', JSON.stringify(newAddress));
+            return addressDAO.update(newAddress);
+          })
+          .then(function(r) {
+            return modelParser.clear(r).balance;
+          })
+          .then(resolve)
+          .catch(reject);
+      });
+    },
+
     getAddressBalance: function(address) {
       var self = this;
 
