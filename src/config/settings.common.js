@@ -12,8 +12,8 @@ module.exports = {
     },
 
     defaultSettings: {
-      minimumConfirmations: 6,
-      minimumAddressPoolSize: 0,
+      minimumConfirmations: process.env.MIN_CONFIRMATIONS || 3,
+      minimumAddressPoolSize: process.env.MIN_ADDRESS_POOL_SIZE || 100,
       currentBlockNumber: 1000,
       transactionNotificationAPI: process.env.NOTIFICATION_API_ADDRESS
     },
