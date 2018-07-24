@@ -13,6 +13,9 @@ var nodemailer              = require('nodemailer');
 var mutex                   = require( 'node-mutex' );
 var Client                  = require('bitcoin-core');
 
+// preventing ERR max number of clients reached from REDIS
+var m = mutex(settings.mutex);
+
 module.exports = {
   getHelper: function(helper) {
     switch (helper) {
@@ -22,7 +25,7 @@ module.exports = {
         });
       case 'mutex':
         return new MutexHelper({
-          mutex: mutex(settings.mutex)
+          mutex: m
         });
       case 'request':
         return new RequestHelper({
