@@ -168,12 +168,18 @@ module.exports = function(dependencies) {
           .then(function(r) {
             unlock = r;
             logger.info('[TransactionBO.save()] Estimating the fee');
-            return daemonHelper.estimateSmartFee();
+            return daemonHelper.estimateSmartFee()
+              .then(function(r) {
+                return r;
+              })
+              .catch(function(e) {
+                logger.info('[TransactionBO.save()] An error has occurred while estimating the fee', JSON.stringify(e));
+              });
           })
           .then(function(r) {
             logger.info('[TransactionBO.save()] Estimated fee', r);
             logger.debug('[TransactionBO.save()] Calculating amout to check (r * 1.1) + entity.amount', r, entity.amount, JSON.stringify(entity));
-            var amountToCheck = new Decimal(r).times(1.1).plus(entity.amount).toFixed(8);
+            var amountToCheck = new Decimal(r || 0).times(1.1).plus(entity.amount).toFixed(8);
             return addressBO.checkHasFunds(entity.from, amountToCheck, 0);
           })
           .then(function(r) {
