@@ -174,7 +174,6 @@ module.exports = function(dependencies) {
               })
               .catch(function(e) {
                 logger.info('[TransactionBO.save()] An error has occurred while estimating the fee', JSON.stringify(e));
-                return 0;
               });
           })
           .then(function(r) {
