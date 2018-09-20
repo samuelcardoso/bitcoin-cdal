@@ -221,17 +221,21 @@ module.exports = function(dependencies) {
           })
           .then(function(){
             logger.info('[TransactionBO] Getting transaction information by transactionHash', transactionRequest.transactionHash);
-            return daemonHelper.getTransaction(transactionRequest.transactionHash);
-          })
-          .then(function(r) {
-            blockchainTransaction = r;
-            logger.debug('[TransactionBO] Return of blockchain', JSON.stringify(r));
+            return daemonHelper.getTransaction(transactionRequest.transactionHash)
+              .then(function(r) {
+                blockchainTransaction = r;
+                logger.debug('[TransactionBO] Return of blockchain', JSON.stringify(r));
 
-            transactionRequest.fee = -r.fee;
-            transactionRequest.updatedAt = dateHelper.getNow();
+                transactionRequest.fee = -r.fee;
+                transactionRequest.updatedAt = dateHelper.getNow();
 
-            logger.info('[TransactionBO] Updating the transaction request ', JSON.stringify(transactionRequest));
-            return transactionRequestDAO.update(transactionRequest);
+                logger.info('[TransactionBO] Updating the transaction request ', JSON.stringify(transactionRequest));
+                return transactionRequestDAO.update(transactionRequest);
+              })
+              .catch(function(e) {
+                logger.warn('[TransactionBO] An error has occurred while getting transaction', JSON.stringify(e));
+                return null;
+              });
           })
           .then(function() {
             var amountToWithdraw = new Decimal(transactionRequest.amount).plus(transactionRequest.fee).toFixed(8);
