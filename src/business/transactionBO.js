@@ -234,6 +234,10 @@ module.exports = function(dependencies) {
               })
               .catch(function(e) {
                 logger.warn('[TransactionBO] An error has occurred while getting transaction', JSON.stringify(e));
+
+                transactionRequest.fee = 0;
+                transactionRequest.updatedAt = dateHelper.getNow();
+
                 return null;
               });
           })
