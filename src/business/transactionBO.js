@@ -238,7 +238,8 @@ module.exports = function(dependencies) {
                 transactionRequest.fee = 0;
                 transactionRequest.updatedAt = dateHelper.getNow();
 
-                return null;
+                logger.info('[TransactionBO] Updating the transaction request ', JSON.stringify(transactionRequest));
+                return transactionRequestDAO.update(transactionRequest);
               });
           })
           .then(function() {
